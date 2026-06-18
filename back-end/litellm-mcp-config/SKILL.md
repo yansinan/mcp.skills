@@ -696,21 +696,28 @@ LiteLLM 在原生 MCP 端点下会自动为工具名添加 server 前缀：
 
 自建 STDIO MCP 服务器的 `tools/list` 返回空工具列表时，**无 stdout 错误也无 stderr 输出**（静默失败）。常见原因：
 
-**目录深度不匹配**：`load_skills` 扫描 `skills/` 下直接子目录的 `SKILL.md`，但仓库结构用了 `skills/local/<name>/SKILL.md`（多了一层分类目录）。
+**目录深度不匹配**：`load_entries` 扫描 `skills/` 下直接子目录的 `SKILL.md`，但仓库结构用了分类子目录（例如 `mcp.skills` 的 `back-end/<name>/SKILL.md` 或 `hermes-chores/<name>/SKILL.md`，多了一层分类目录）。
+
+两种常见情况：
+- **旧模式**：`skills/local/<name>/SKILL.md`（平铺，`local/` 是虚拟分类）
+- **新模式**（mcp.skills 子模块）：`skills/back-end/<name>/SKILL.md` 或 `skills/hermes-chores/<name>/SKILL.md`（真实分类目录）
 
 ```python
-# ❌ 只扫一级：skills/<name>/SKILL.md
+# ❌ 只扫一级：skills/<name>/SKILL.md — 找不到任何技能
 for sub in sorted(skills_dir.iterdir()):
     skill_md = sub / "SKILL.md"
 
-# ✅ 递归二级：skills/<name>/SKILL.md + skills/<cat>/<name>/SKILL.md
+# ✅ 递归扫描：skills/back-end/<name>/SKILL.md 也能找到
 def _scan(dir_path):
     for sub in sorted(dir_path.iterdir()):
-        ...
+        if not sub.is_dir():
+            continue
+        # 有 SKILL.md 就收录，否则继续递归
+        if (sub / "SKILL.md").is_file():
+            entries.append(sub.name, ...)
+        else:
+            _scan(sub)
 _scan(skills_dir)
-for sub in sorted(skills_dir.iterdir()):
-    if sub.is_dir():
-        _scan(sub)
 ```
 
 **诊断方法**：用 echo pipe 独立测试脚本（见 `references/stdio-empty-tools-debug.md`），不必依赖 LiteLLM 重启。先确认脚本本身的 `tools/list` 能返回数据，再排查 LiteLLM 侧问题。

@@ -72,22 +72,31 @@ git remote add origin git@github.com:yansinan/mcp.skills.git
 git push -u origin main
 ```
 
-### 4. 清理父仓库跟踪（在嵌套 repo 初始化之后）
+### 4. 清理父仓库 `~/.hermes/` 的跟踪
+
+嵌套 git 初始化后，`~/.hermes/` 仍能看到之前 commit 过的不成熟技能文件。
 
 ```bash
-# 在初始化 nested repo 并 push 到 GitHub 之后
 cd ~/.hermes
 
-# 从父仓库跟踪中移除不成熟技能（文件保留磁盘；这些文件被 nested .git 覆盖，
-# 父仓库不应再跟踪它们）
-git rm --cached skills/local/<immature-skill>/SKILL.md ...
+# 从父仓库索引中移除不成熟技能（文件保留在磁盘上）
+git ls-files skills/local/ | xargs git rm --cached
 
-# 确认 .gitignore 已有 skills/local/ 排除规则
-echo "# Nested git repo — mcp.skills" >> .gitignore
+# 将整个 skills/local/ 加入父仓库 .gitignore
 echo "skills/local/" >> .gitignore
+
+# 提交这次清理
+git add .gitignore
+git commit -m "chore: untrack local/ skills into nested mcp.skills repo"
 ```
 
-**重要顺序**：必须先初始化 nested repo（步骤 3），再从父仓库 `git rm --cached`。反过来操作（先 rm 再 init nested）会导致文件被移出父仓索引、但 nested repo 还没建立来承接它们，造成中间状态混乱。
+**⚠️ 容易混淆的点**：
+- 这个 `git rm --cached` 是在 **父仓库 `~/.hermes/`** 上执行的，不是在 mcp.skills 仓库上
+- 在 mcp.skills 仓库（`~/.hermes/skills/local/`）中，不成熟技能是 **untracked 文件**（从未 commit），不需要也做不了 `git rm`
+- 如果你分不清现在在哪个仓库里操作，先 `git rev-parse --show-toplevel` 确认
+- `~/.hermes/skills/local/` 是一个嵌套 git 仓库，父仓库 `~/.hermes/` 是另一个独立的仓库
+
+**执行时机**：必须先 `.gitignore`，再 `git rm --cached`。反之则 git rm 后文件失去跟踪，但 .gitignore 还没生效前 git status 会重新看到它们。
 
 ### 5. 作为子模块添加到 MCP 服务仓库
 
