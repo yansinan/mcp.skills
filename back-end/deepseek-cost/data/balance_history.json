@@ -1,0 +1,625 @@
+[
+  {
+    "timestamp": "2026-06-18T00:12:58.018473+08:00",
+    "total_balance": "10.04",
+    "granted_balance": "0.00",
+    "topped_up_balance": "10.04",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T00:17:58.429082+08:00",
+    "total_balance": "10.01",
+    "granted_balance": "0.00",
+    "topped_up_balance": "10.01",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T00:22:58.692817+08:00",
+    "total_balance": "9.83",
+    "granted_balance": "0.00",
+    "topped_up_balance": "9.83",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T00:27:59.006141+08:00",
+    "total_balance": "9.55",
+    "granted_balance": "0.00",
+    "topped_up_balance": "9.55",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T00:32:59.279755+08:00",
+    "total_balance": "9.32",
+    "granted_balance": "0.00",
+    "topped_up_balance": "9.32",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T00:37:59.655556+08:00",
+    "total_balance": "9.31",
+    "granted_balance": "0.00",
+    "topped_up_balance": "9.31",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T00:42:59.930654+08:00",
+    "total_balance": "9.26",
+    "granted_balance": "0.00",
+    "topped_up_balance": "9.26",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T00:43:00.234565+08:00",
+    "total_balance": "9.26",
+    "granted_balance": "0.00",
+    "topped_up_balance": "9.26",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T00:48:00.431802+08:00",
+    "total_balance": "18.82",
+    "granted_balance": "0.00",
+    "topped_up_balance": "18.82",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T00:53:00.725024+08:00",
+    "total_balance": "18.69",
+    "granted_balance": "0.00",
+    "topped_up_balance": "18.69",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T00:58:00.948864+08:00",
+    "total_balance": "17.56",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.56",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T01:03:01.194867+08:00",
+    "total_balance": "17.50",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.50",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T01:08:01.543989+08:00",
+    "total_balance": "17.44",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.44",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T01:13:01.941628+08:00",
+    "total_balance": "17.12",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.12",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T01:18:02.220177+08:00",
+    "total_balance": "17.06",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.06",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T01:23:03.174398+08:00",
+    "total_balance": "16.69",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.69",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T01:28:03.489087+08:00",
+    "total_balance": "16.31",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.31",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T01:33:03.820173+08:00",
+    "total_balance": "15.56",
+    "granted_balance": "0.00",
+    "topped_up_balance": "15.56",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T01:38:04.157586+08:00",
+    "total_balance": "15.22",
+    "granted_balance": "0.00",
+    "topped_up_balance": "15.22",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T01:43:04.408588+08:00",
+    "total_balance": "15.14",
+    "granted_balance": "0.00",
+    "topped_up_balance": "15.14",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T01:48:04.790919+08:00",
+    "total_balance": "14.86",
+    "granted_balance": "0.00",
+    "topped_up_balance": "14.86",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T01:53:05.021036+08:00",
+    "total_balance": "14.81",
+    "granted_balance": "0.00",
+    "topped_up_balance": "14.81",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T01:58:05.290839+08:00",
+    "total_balance": "14.63",
+    "granted_balance": "0.00",
+    "topped_up_balance": "14.63",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T02:03:05.631769+08:00",
+    "total_balance": "14.56",
+    "granted_balance": "0.00",
+    "topped_up_balance": "14.56",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T02:08:05.866248+08:00",
+    "total_balance": "14.47",
+    "granted_balance": "0.00",
+    "topped_up_balance": "14.47",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T02:13:06.157200+08:00",
+    "total_balance": "14.14",
+    "granted_balance": "0.00",
+    "topped_up_balance": "14.14",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T02:18:06.464866+08:00",
+    "total_balance": "13.43",
+    "granted_balance": "0.00",
+    "topped_up_balance": "13.43",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T02:23:06.755388+08:00",
+    "total_balance": "13.25",
+    "granted_balance": "0.00",
+    "topped_up_balance": "13.25",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T02:28:07.049788+08:00",
+    "total_balance": "13.12",
+    "granted_balance": "0.00",
+    "topped_up_balance": "13.12",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T15:27:03.419605+08:00",
+    "total_balance": "9.20",
+    "granted_balance": "0.00",
+    "topped_up_balance": "9.20",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T15:32:09.952812+08:00",
+    "total_balance": "8.90",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.90",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T15:37:10.402475+08:00",
+    "total_balance": "8.90",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.90",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T15:42:10.731218+08:00",
+    "total_balance": "8.90",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.90",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T15:47:10.984236+08:00",
+    "total_balance": "8.87",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.87",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T15:52:11.270985+08:00",
+    "total_balance": "8.87",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.87",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T15:57:11.539545+08:00",
+    "total_balance": "8.87",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.87",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T16:02:11.820070+08:00",
+    "total_balance": "8.87",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.87",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T16:07:12.165299+08:00",
+    "total_balance": "8.87",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.87",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T16:12:12.477824+08:00",
+    "total_balance": "8.87",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.87",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T16:17:13.042308+08:00",
+    "total_balance": "8.87",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.87",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T16:22:13.386361+08:00",
+    "total_balance": "8.86",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.86",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T16:27:13.697642+08:00",
+    "total_balance": "8.86",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.86",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T16:32:14.004737+08:00",
+    "total_balance": "8.86",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.86",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T16:37:14.305040+08:00",
+    "total_balance": "8.75",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.75",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T16:42:14.633178+08:00",
+    "total_balance": "8.73",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.73",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T16:47:14.927381+08:00",
+    "total_balance": "8.65",
+    "granted_balance": "0.00",
+    "topped_up_balance": "8.65",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T16:52:15.129353+08:00",
+    "total_balance": "18.13",
+    "granted_balance": "0.00",
+    "topped_up_balance": "18.13",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T16:57:15.499706+08:00",
+    "total_balance": "17.99",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.99",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T17:02:15.836116+08:00",
+    "total_balance": "17.97",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.97",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T17:07:16.103078+08:00",
+    "total_balance": "17.94",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.94",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T17:12:16.454947+08:00",
+    "total_balance": "17.78",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.78",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T17:17:16.869881+08:00",
+    "total_balance": "17.71",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.71",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T17:22:17.145289+08:00",
+    "total_balance": "17.71",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.71",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T17:27:17.463659+08:00",
+    "total_balance": "17.71",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.71",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T17:32:17.779663+08:00",
+    "total_balance": "17.71",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.71",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T17:37:18.038925+08:00",
+    "total_balance": "17.71",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.71",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T17:42:18.371377+08:00",
+    "total_balance": "17.66",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.66",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T17:47:18.664424+08:00",
+    "total_balance": "17.66",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.66",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T17:52:19.081828+08:00",
+    "total_balance": "17.66",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.66",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T17:57:19.376026+08:00",
+    "total_balance": "17.66",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.66",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T18:02:19.698644+08:00",
+    "total_balance": "17.66",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.66",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T18:07:20.014402+08:00",
+    "total_balance": "17.65",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.65",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T18:12:20.349906+08:00",
+    "total_balance": "17.65",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.65",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T18:17:20.722032+08:00",
+    "total_balance": "17.56",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.56",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T18:22:21.020210+08:00",
+    "total_balance": "17.48",
+    "granted_balance": "0.00",
+    "topped_up_balance": "17.48",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T18:27:21.308308+08:00",
+    "total_balance": "16.97",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.97",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T18:32:21.693924+08:00",
+    "total_balance": "16.87",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.87",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T18:37:21.993024+08:00",
+    "total_balance": "16.58",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.58",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T18:42:22.325059+08:00",
+    "total_balance": "16.40",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.40",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T18:47:22.605303+08:00",
+    "total_balance": "16.40",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.40",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T18:52:22.912770+08:00",
+    "total_balance": "16.40",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.40",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T18:57:23.224970+08:00",
+    "total_balance": "16.20",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.20",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T19:02:23.647854+08:00",
+    "total_balance": "16.18",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.18",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T19:07:23.944500+08:00",
+    "total_balance": "16.02",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.02",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T19:12:24.191148+08:00",
+    "total_balance": "16.00",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.00",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T19:17:24.545084+08:00",
+    "total_balance": "16.00",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.00",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T19:22:24.873609+08:00",
+    "total_balance": "16.00",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.00",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T19:27:25.181742+08:00",
+    "total_balance": "16.00",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.00",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T19:32:25.540971+08:00",
+    "total_balance": "16.00",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.00",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T19:37:25.881300+08:00",
+    "total_balance": "16.00",
+    "granted_balance": "0.00",
+    "topped_up_balance": "16.00",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T19:42:26.214132+08:00",
+    "total_balance": "15.83",
+    "granted_balance": "0.00",
+    "topped_up_balance": "15.83",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T19:47:26.552269+08:00",
+    "total_balance": "15.75",
+    "granted_balance": "0.00",
+    "topped_up_balance": "15.75",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T19:52:26.894990+08:00",
+    "total_balance": "15.75",
+    "granted_balance": "0.00",
+    "topped_up_balance": "15.75",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T19:57:27.170973+08:00",
+    "total_balance": "15.75",
+    "granted_balance": "0.00",
+    "topped_up_balance": "15.75",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T20:02:27.571334+08:00",
+    "total_balance": "15.75",
+    "granted_balance": "0.00",
+    "topped_up_balance": "15.75",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T20:07:27.880525+08:00",
+    "total_balance": "15.75",
+    "granted_balance": "0.00",
+    "topped_up_balance": "15.75",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T20:12:28.173875+08:00",
+    "total_balance": "15.75",
+    "granted_balance": "0.00",
+    "topped_up_balance": "15.75",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T20:17:28.516380+08:00",
+    "total_balance": "15.75",
+    "granted_balance": "0.00",
+    "topped_up_balance": "15.75",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T20:22:28.856264+08:00",
+    "total_balance": "15.75",
+    "granted_balance": "0.00",
+    "topped_up_balance": "15.75",
+    "is_available": true
+  }
+]
