@@ -103,7 +103,8 @@ mcp_servers:
     env:
       FASTMCP_LOG_LEVEL: "INFO"
 
-  # 注册自建 stdio MCP 服务器（脚本位于子模块仓库内）
+  # 注册自建 STDIO MCP 服务器（脚本位于子模块仓库内）
+  # ⚠️ server name 不能含连字符（-），用 camelCase
   mcpSway:
     transport: stdio
     command: python3
