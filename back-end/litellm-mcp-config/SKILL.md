@@ -123,6 +123,8 @@ mcp_servers:
 
 **从 template.mcp 创建新 MCP 服务**：参见 `references/template-mcp-new-service.md` — 使用 `yansinan/template.mcp` 标准化模板创建新 MCP 服务仓库的完整工作流（GitHub 创建 → 克隆 → 模板复制 → 定制 → 验证 → LiteLLM 注册）。
 
+**mcp.skills 子模块技能库**：参见 `references/mcp-skills-submodule-workflow.md` — 将本地成熟技能分类组织为独立 git 仓库，作为 MCP 服务仓库的子模块，实现 serverHome LiteLLM 定期拉取同步的模式。
+
 ### 自建 HTTP MCP 服务示例
 
 假设你在本地起了一个 MCP 服务（如 Python 的 `mcp` 库或 Node.js 的 `@modelcontextprotocol/server`），暴露在 `http://localhost:9000/sse` 或 `http://localhost:9000/mcp`：

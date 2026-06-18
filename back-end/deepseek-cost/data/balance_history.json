@@ -1,19 +1,5 @@
 [
   {
-    "timestamp": "2026-06-18T00:12:58.018473+08:00",
-    "total_balance": "10.04",
-    "granted_balance": "0.00",
-    "topped_up_balance": "10.04",
-    "is_available": true
-  },
-  {
-    "timestamp": "2026-06-18T00:17:58.429082+08:00",
-    "total_balance": "10.01",
-    "granted_balance": "0.00",
-    "topped_up_balance": "10.01",
-    "is_available": true
-  },
-  {
     "timestamp": "2026-06-18T00:22:58.692817+08:00",
     "total_balance": "9.83",
     "granted_balance": "0.00",
@@ -620,6 +606,20 @@
     "total_balance": "15.75",
     "granted_balance": "0.00",
     "topped_up_balance": "15.75",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T20:27:29.126431+08:00",
+    "total_balance": "15.57",
+    "granted_balance": "0.00",
+    "topped_up_balance": "15.57",
+    "is_available": true
+  },
+  {
+    "timestamp": "2026-06-18T20:32:29.448951+08:00",
+    "total_balance": "15.23",
+    "granted_balance": "0.00",
+    "topped_up_balance": "15.23",
     "is_available": true
   }
 ]
