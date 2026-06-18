@@ -55,24 +55,41 @@ echo "skills/local/" >> ~/.hermes/.gitignore
 
 ```bash
 cd ~/.hermes/skills/local
+
+# 确保父仓库 .gitignore 先写上 skills/local/ 排除规则
+# （见下方"父仓库 .gitignore 需要排除嵌套 git"）
+
 git init
 git branch -m main
 
-# .gitignore 排除不成熟技能
-cat > .gitignore << 'EOF'
-# 不成熟技能 — 不包括在 mcp.skills 仓库中
-browser-content-extraction/
-cdp-search/
-...
-EOF
+# ⚠️ 不设 .gitignore 排除不成熟技能
+# 不成熟技能留在磁盘上，它们只是 untracked 文件，不会自动被 commit
+# 除非显式 git add，否则不进入 mcp.skills 仓库
 
-git add back-end/ hermes-chores/ .gitignore
+git add back-end/ hermes-chores/
 git commit -m "init: mature skills from skills/local/"
 git remote add origin git@github.com:yansinan/mcp.skills.git
 git push -u origin main
 ```
 
-### 4. 作为子模块添加到 MCP 服务仓库
+### 4. 清理父仓库跟踪（在嵌套 repo 初始化之后）
+
+```bash
+# 在初始化 nested repo 并 push 到 GitHub 之后
+cd ~/.hermes
+
+# 从父仓库跟踪中移除不成熟技能（文件保留磁盘；这些文件被 nested .git 覆盖，
+# 父仓库不应再跟踪它们）
+git rm --cached skills/local/<immature-skill>/SKILL.md ...
+
+# 确认 .gitignore 已有 skills/local/ 排除规则
+echo "# Nested git repo — mcp.skills" >> .gitignore
+echo "skills/local/" >> .gitignore
+```
+
+**重要顺序**：必须先初始化 nested repo（步骤 3），再从父仓库 `git rm --cached`。反过来操作（先 rm 再 init nested）会导致文件被移出父仓索引、但 nested repo 还没建立来承接它们，造成中间状态混乱。
+
+### 5. 作为子模块添加到 MCP 服务仓库
 
 ```bash
 cd ~/workspace/hermes-chores.mcp
@@ -121,6 +138,5 @@ echo "skills/local/" >> ~/.hermes/.gitignore
 ### 不成熟的技能
 
 - 留在 `~/.hermes/skills/local/` 磁盘上（不推送到 GitHub）
-- 通过 `.gitignore` 排除
-- 等成熟后再移入分类目录，push 到 GitHub
-- 从父仓库 `~/.hermes/` 中 `git rm --cached` 移出跟踪（避免误 commit）
+- 不设 `.gitignore` 排除它们 — untracked 文件不会被自动 commit
+- 等成熟后再移入分类目录，`git add` 后 push 到 GitHub
