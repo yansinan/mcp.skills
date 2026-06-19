@@ -20,6 +20,8 @@ LiteLLM Proxy 统一了 100+ LLM 供应商的调用方式，暴露出多套 **Op
 详见 `references/completions-deprecation-timeline.md`（弃用时间线）。
 详见 `references/responses-model-support-and-bridge.md`（模型支持清单 + 桥接行为）。
 详见 `references/deployment-topology-and-testing.md`（serverhome 部署拓扑 + 跨机测试模式）。
+详见 `references/runtime-error-patterns.md`（`partial()` 参数冲突 — Responses API bridge 常见 runtime error）。  
+详见 `references/provider-response-format-quirks.md`（各供应商 `response_format: json_object` 的限制）。
 
 ## 两套数据检索系统
 

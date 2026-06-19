@@ -1,0 +1,7 @@
+name: web-test
+version: 0.1.0
+description: "Test web extract provider — returns mock data. Proves plugin registration and routing work before building real logic."
+author: user
+kind: backend
+provides_web_providers:
+  - test-extract
