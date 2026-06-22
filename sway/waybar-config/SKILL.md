@@ -70,3 +70,28 @@ killall -SIGUSR2 waybar
 - `chrome-<name>.desktop` (named shortcut) and `chrome-<appid>-Default.desktop` (auto-generated) can coexist for the same PWA. Use the one with the actual `Exec` line.
 - `Name=` in `.desktop` may conflict between different PWA instances (e.g. three Hermes PWAs all named "Hermes"). Disambiguate via the shortcut URL.
 
+## MPRIS for music playback (minimal client on Sway)
+
+If using mpv as the music player (see `sway-music-client` umbrella for the full pattern), waybar's native `mpris` module auto-discovers any MPRIS-compliant player and displays title/artist/progress with zero polling cost. **No custom module needed.**
+
+```jsonc
+// In modules-left/center/right array:
+"mpris"
+// In module config:
+"mpris": {
+  "player": "mpv",                          // or omit to follow playerctld
+  "format": "{title} - {artist}",
+  "format-paused": "⏸ {title}",
+  "format-stopped": "",
+  "interval": 0,                            // event-driven, no polling
+  "on-click": "playerctl play-pause",
+  "on-click-middle": "playerctl next",
+  "on-scroll-up": "playerctl volume 0.05+",
+  "on-scroll-down": "playerctl volume 0.05-"
+}
+```
+
+**Prerequisite**: mpv must register on D-Bus. mpv does this by default — verify with `playerctl -l` (should list `mpv`). If absent, launch with `mpv --idle` instead of plain `mpv` — the `--idle` flag keeps the process alive and D-Bus registered between songs.
+
+**Why native mpris > custom module**: a `custom/<name>` module that polls `playerctl metadata` every N seconds wastes CPU and fights XDG_MUSIC_DIR clashes; waybar-mpris is event-driven through the D-Bus signal.
+

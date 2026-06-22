@@ -172,6 +172,91 @@ systemctl --user is-active swayidle.service
 # 应显示 inactive
 ```
 
+## swayidle 配置编排（4 个实际事件）
+
+swayidle 允许多个 timeout 事件独立并发注册（每个事件各自计时、各自触发）。单 config 文件可混搭多个 3600s 事件，只是它们**共享 idle 检测源**（ext-idle-notify 协议）。
+
+一个经过实战检验的完整配置（4 个 timeout + 2 个 resume 配对）：
+
+```
+~/.config/swayidle/config
+
+timeout 60    → --mark-idle / --mark-active       # idle 标记, 供 sway-session daemon
+timeout 3600  → --screen-off / --screen-on         # 关/开 Philips 4K 外屏
+timeout 3600  → sway-screensaver-day.sh / close    # 白天 6-22: 浏览器全屏屏保
+timeout 3600  → sway-suspend-if-night.sh           # 夜晚 22-6: systemctl suspend
+```
+
+### 白天浏览器屏保
+
+6:00-22:00 期间 1 小时无活动 → 用 Chrome 全屏打开网页面，作为屏保。
+
+**设计原则**：
+- 用 `--user-data-dir=/tmp/...` 隔离屏保 Chrome 实例，不影响用户已有 Chrome session
+- 用 `--new-window` 复用已有的 Chrome 进程（不是 fork 新的 Chrome 进程）
+- resume 时先 `swaymsg [title=".*pattern.*"] kill` 正则匹配杀窗口，再 pkill 兜底
+
+**打开脚本** (sway-screensaver-day.sh)：
+```sh
+#!/bin/sh
+# 仅在 6-22 白天打开屏保
+hour=$(date +%H)
+if [ "$hour" -ge 6 ] && [ "$hour" -lt 22 ]; then
+    google-chrome --new-window --start-fullscreen \
+        --user-data-dir=/tmp/sway-screensaver-data \
+        --ozone-platform-hint=auto \
+        --no-first-run --noerrdialogs \
+        --disable-pings --media-router=0 \
+        "http://home.z-core.cn:8080/screensaver.web/"
+fi
+```
+
+**关闭脚本** (sway-screensaver-close.sh)：
+```sh
+#!/bin/sh
+# swaymsg 正则匹配窗口标题 (PCRE, 不是 shell glob!)
+swaymsg '[title=".*Screen Saver.*"] kill' 2>/dev/null
+sleep 0.5
+# pkill 兜底: 杀特定 user-data-dir 的 Chrome 进程
+kill $(pgrep -f "sway-screensaver-data" 2>/dev/null) 2>/dev/null
+```
+
+**关键**：swaymsg criteria 的 `title=` 字段用 **PCRE 正则**（不是 glob），所以匹配任意子串必须用 `.*Screen Saver.*`。用 `*Screen Saver*`（裸星号）会报 `quantifier does not follow a repeatable item` 错误。
+
+| 写法 | 结果 |
+|------|------|
+| `[title="Screen Saver"]` | 精确匹配 — 只有窗口标题完全等于 "Screen Saver" 才命中 |
+| `[title=".*Screen Saver.*"]` | ✅ 正则 — 标题包含 "Screen Saver" 就命中 |
+| `[title="*Screen Saver*"]` | ❌ 报错 — `*` 前面没有可重复元素 |
+
+### 昼夜时间窗口（22:00-06:00 触发 s2idle，06:00-22:00 触发屏保）
+
+swayidle 本身不内置时间判断。时间窗口通过脚本内的 `date +%H` 检查实现：
+
+```sh
+hour=$(date +%H)
+# 白天模式 (6-22): 浏览器屏保
+if [ "$hour" -ge 6 ] && [ "$hour" -lt 22 ]; then
+    google-chrome ...
+fi
+# 夜晚模式 (22-6): s2idle
+if [ "$hour" -ge 22 ] || [ "$hour" -lt 6 ]; then
+    systemctl suspend
+fi
+```
+
+**边界值**（已验证）：
+- hour=5 → `< 6` → 夜间 → s2idle
+- hour=6 → `>= 6` → 白天 → 屏保
+- hour=21 → `< 22` → 白天 → 屏保
+- hour=22 → `>= 22` → 夜间 → s2idle
+
+### systemctl --user restart 可能 hang
+
+`systemctl --user restart swayidle.service` 发 SIGTERM 给 swayidle 后，如果 swayidle**正在跑 resume 子命令**（--screen-on / --mark-active），子进程不立即退出 → swayidle 进程在 SIGTERM handler 里等子进程完成 → systemd 等 `stop-sigterm` 超时（90 秒默认）。
+
+**解决**：用 `kill -9 <PID>` 强杀 + `systemctl --user reset-failed` + `systemctl --user start swayidle.service`。
+
 ## 边界情况
 
 ### sway-session 的特殊处理
@@ -187,13 +272,12 @@ sway-session 脚本的 `exec sway-session.py`（restore + daemon 合一）不能
 2. systemd 的 sway-session.service **暂不启用**（等脚本拆出 `--restore-only` 子命令后，二者分离）
 3. 风险：daemon 部分死后不自动重启，5 分钟布局跳过。权衡后接受
 
-**如果脚本支持 **`--restore-only`：
+**如果脚本支持**`--restore-only`：
 ```diff
  # ~/.config/sway/config
 -exec /home/dr/Scripts/sway-session.py
 +exec /home/dr/Scripts/sway-session.py --restore-only   # 仅恢复, 不进 daemon
 ```
-
 systemd service 负责 daemon。
 
 ### 22:00-06:00 时间窗口触发 s2idle

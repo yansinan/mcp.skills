@@ -115,6 +115,39 @@ Covered in depth by `hermes-ssh-backend`. Key constraints:
 - No native task handoff — the profile is just a terminal, not a coordinated worker
 - Use for simple "run this command on that machine" scenarios, not for multi-step orchestration
 
+## Manual `ssh -L` Port Forwarding — Hidden Pitfall
+
+When the goal is to *access another Hermes instance's webui* (e.g. `localhost:8787` on a remote host) from the local machine, it's tempting to use `ssh -L`:
+
+```bash
+ssh -L 8787:127.0.0.1:8787 dr@helix
+# then open http://127.0.0.1:8787/
+```
+
+**Don't do this if the local machine runs its own Hermes.** Pitfall:
+
+- The local `hermes-webui` also listens on port `8787` (typically on the Tailscale IP `100.66.66.<n>:8787`, not `0.0.0.0`, so `127.0.0.1:8787` is technically free — for now).
+- The SSH forward occupies `127.0.0.1:8787` on the local machine, so `http://127.0.0.1:8787/` silently resolves to the *remote* webui, not the local one.
+- If the local webui config ever changes to bind `0.0.0.0:8787` (a one-line `.env` change), the SSH forward starts failing with `bind: address already in use` and your local webui access breaks.
+- The asymmetric "127.0.0.1 vs Tailscale IP" creates cognitive ambiguity — humans (and future agents) can't tell which `8787` they're hitting.
+
+**Correct alternative: Tailscale Service / Funnel.** Each host already broadcasts a per-host HTTPS service:
+
+```
+https://hermes-x1tablet.tail2e6efb.ts.net  →  localhost:8787  (local)
+https://hermes-helix.tail2e6efb.ts.net     →  localhost:8787  (remote)
+https://hermes-serverhome.tail2e6efb.ts.net →  localhost:8787  (remote)
+```
+
+Tailscale Funnel/serve runs a local proxy on the *remote* host that hits the remote's own `localhost:8787` — so even if the remote webui binds only `127.0.0.1`, the funnel still works. This is strictly better than `ssh -L` for webui access because:
+
+- No local port occupation
+- HTTPS by default, no Tailscale ACL gymnastics
+- No conflict with the local Hermes instance
+- Works from phones, tablets, other machines — not just the SSH source
+
+Reserve `ssh -L` for non-Hermes services that don't have a Tailscale service yet. Always check `ss -tlnp | grep <port>` locally first — including Tailscale-IP-bound listeners, not just `0.0.0.0`/`127.0.0.1`.
+
 ## Research: Existing MCP Coordination Projects
 
 A survey of open-source MCP task coordination servers (conducted June 2026):
