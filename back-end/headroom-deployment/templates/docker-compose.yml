@@ -1,0 +1,48 @@
+# =============================================================================
+# Headroom — AI Agent Context Compression Proxy
+# Docs: https://headroom-docs.vercel.app/docs
+#
+# Portable deployment (nginxNet bridge):
+#   Port:  3999 → 8787
+#   Net:   nginxNet (external bridge)
+#   Upstream: http://100.66.66.203/litellm/headroom
+#
+# Override via .env (HOST_PORT, OPENAI_TARGET_API_URL, etc.)
+# =============================================================================
+
+services:
+  headroom:
+    container_name: headroom
+    image: ghcr.io/chopratejas/headroom:latest
+    restart: unless-stopped
+
+    ports:
+      - "${HOST_PORT:-3999}:8787"
+
+    networks:
+      - nginxNet
+
+    env_file:
+      - path: .env
+        required: false
+
+    environment:
+      - OPENAI_TARGET_API_URL=http://100.66.66.203/litellm/headroom
+      - HEADROOM_TELEMETRY=off
+
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8787/readyz"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  nginxNet:
+    external: true

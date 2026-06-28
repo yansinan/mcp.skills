@@ -1,0 +1,75 @@
+// waybar config-top snippet — add to your existing config-top
+// Each `custom/<svc>-*` module becomes a clickable button.
+// The `mpris` module auto-binds to mpv and shows the current song.
+
+{
+  "custom/<svc>-status": {
+    "format": "{}",
+    "exec": "<svc> status-button",
+    "interval": 60,
+    "on-click": "foot --float -e <svc> login",
+    "tooltip": true,
+    "tooltip-format": "未登录/已登录（点击扫码登录）"
+  },
+  "custom/<svc>-fm": {
+    "format": "FM",
+    "on-click": "<svc> fm",
+    "tooltip": true,
+    "tooltip-format": "私人雷达（个性化推荐）"
+  },
+  "custom/<svc>-pl": {
+    "format": "歌单",
+    "on-click": "<svc> pl",
+    "tooltip": true,
+    "tooltip-format": "我的歌单"
+  },
+  "custom/<svc>-prev": {
+    "format": " ",
+    "on-click": "<svc> prev",
+    "tooltip": true,
+    "tooltip-format": "上一首"
+  },
+  "custom/<svc>-like": {
+    "format": "{}",
+    "exec": "<svc> like-button",
+    "interval": 3,
+    "on-click": "<svc> like",
+    "tooltip": true,
+    "tooltip-format": "喜欢/取消喜欢当前歌曲"
+  },
+  "custom/<svc>-play": {
+    "format": "{}",
+    "exec": "<svc> play-button",
+    "interval": 1,
+    "on-click": "<svc> toggle",
+    "tooltip": true,
+    "tooltip-format": "播放/暂停"
+  },
+  "custom/<svc>-next": {
+    "format": " ",
+    "on-click": "<svc> next",
+    "tooltip": true,
+    "tooltip-format": "下一首"
+  },
+  "mpris": {
+    "format": "{title} - {artist}",
+    "format-paused": " {title} - {artist}",
+    "player": "mpv",
+    "max-length": 50,
+    "tooltip-format": "{title}\\n{artist}\\n{album}",
+    "on-click": "<svc> toggle",
+    "on-click-middle": "<svc> next",
+    "on-click-right": "<svc> prev",
+    "ignored-players": ["chromium.instance*"]
+  }
+}
+
+// And in your modules-left array, add the modules:
+//   "custom/<svc>-status",
+//   "custom/<svc>-fm",
+//   "custom/<svc>-pl",
+//   "custom/<svc>-prev",
+//   "custom/<svc>-like",
+//   "custom/<svc>-play",
+//   "custom/<svc>-next",
+//   "mpris"

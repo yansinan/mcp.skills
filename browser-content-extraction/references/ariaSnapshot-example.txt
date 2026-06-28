@@ -1,0 +1,161 @@
+# ariaSnapshot Example — Hermes WebUI Docs Page
+
+Source: `browser_snapshot(full=true)` on `https://hermes-agent.nousresearch.com/docs/user-guide/features/deliverable-mode`
+Date: 2026-05-28
+Backend: local Chromium via CDP override
+Full snapshot was ~400+ lines; this is a representative excerpt showing the structure.
+
+```
+- generic
+  - region "Skip to main content" [ref=e1]
+    - link "Skip to main content" [ref=e3]
+  - navigation "Main" [ref=e2]
+    - link "Hermes Agent Hermes Agent" [ref=e4]
+      - image "Hermes Agent"
+      - StaticText "Hermes Agent"
+    - link "Docs" [ref=e5]
+    - link "Skills" [ref=e6]
+    - generic
+      - button "English" [expanded=false, ref=e11]
+        - StaticText "English"
+    - link "Home (opens in new tab)" [ref=e7]
+      - StaticText "Home"
+      - image "(opens in new tab)"
+    - link "GitHub (opens in new tab)" [ref=e8]
+      - StaticText "GitHub"
+      - image "(opens in new tab)"
+    - link "Discord (opens in new tab)" [ref=e9]
+      - StaticText "Discord"
+      - image "(opens in new tab)"
+    - button "Switch between dark and light mode (currently system mode)" [ref=e10]
+    - generic
+      - textbox "Search" [ref=e12]
+      - generic
+        - StaticText "⌘"
+        - StaticText "K"
+  - complementary
+    - navigation "Docs sidebar" [ref=e15]
+      - list
+        - listitem [level=1]
+          - link "User Stories & Use Cases" [ref=e92]
+            - StaticText "User Stories & Use Cases"
+        - listitem [level=1]
+          - button "Getting Started" [expanded=false, ref=e99]
+            - StaticText "Getting Started"
+        - listitem [level=1]
+          - button "Using Hermes" [expanded=false, ref=e100]
+            - StaticText "Using Hermes"
+        - listitem [level=1]
+          - button "Features" [expanded=true, ref=e101]
+            - StaticText "Features"
+          - list
+            - listitem [level=2]
+              - link "Overview" [ref=e107]
+                - StaticText "Overview"
+            - listitem [level=2]
+              - link "Tool Gateway" [ref=e108]
+                - StaticText "Tool Gateway"
+            - listitem [level=2]
+              - button "Core" [expanded=false, ref=e109]
+                - StaticText "Core"
+            - listitem [level=2]
+              - button "Automation" [expanded=false, ref=e110]
+                - StaticText "Automation"
+            - listitem [level=2]
+              - button "Media & Web" [expanded=true, ref=e111]
+                - StaticText "Media & Web"
+              - list
+                - listitem [level=3]
+                  - link "Voice Mode" [ref=e115]
+                    - StaticText "Voice Mode"
+                - listitem [level=3]
+                  - link "Web Search" [ref=e116]
+                    - StaticText "Web Search"
+                - listitem [level=3]
+                  - link "X (Twitter) Search" [ref=e117]
+                    - StaticText "X (Twitter) Search"
+                - listitem [level=3]
+                  - link "Browser" [ref=e118]
+                    - StaticText "Browser"
+                - listitem [level=3]
+                  - link "Computer Use (macOS)" [ref=e119]
+                    - StaticText "Computer Use (macOS)"
+                - listitem [level=3]
+                  - link "Vision & Image Paste" [ref=e120]
+                    - StaticText "Vision & Image Paste"
+                - listitem [level=3]
+                  - link "Image Generation" [ref=e121]
+                    - StaticText "Image Generation"
+                - listitem [level=3]
+                  - link "Voice & TTS" [ref=e122]
+                    - StaticText "Voice & TTS"
+                - listitem [level=3]
+                  - link "Deliverable Mode" [ref=e123]
+                    - StaticText "Deliverable Mode"
+            - listitem [level=2]
+              - button "Management" [expanded=false, ref=e112]
+                - StaticText "Management"
+            - listitem [level=2]
+              - button "Advanced" [expanded=false, ref=e113]
+                - StaticText "Advanced"
+            - listitem [level=2]
+              - button "Skills" [expanded=false, ref=e114]
+                - StaticText "Skills"
+        - listitem [level=1]
+          - button "Messaging Platforms" [expanded=false, ref=e102]
+            - StaticText "Messaging Platforms"
+        - listitem [level=1]
+          - button "Integrations" [expanded=false, ref=e103]
+            - StaticText "Integrations"
+        - listitem [level=1]
+          - button "Guides & Tutorials" [expanded=false, ref=e104]
+            - StaticText "Guides & Tutorials"
+        - listitem [level=1]
+          - button "Developer Guide" [expanded=false, ref=e105]
+            - StaticText "Developer Guide"
+        - listitem [level=1]
+          - button "Reference" [expanded=false, ref=e106]
+            - StaticText "Reference"
+    - button "Collapse sidebar" [ref=e16]
+  - main
+    - article
+      - navigation "Breadcrumbs" [ref=e17]
+        - list
+          - listitem [level=1]
+            - link "Home page" [ref=e93]
+              - image
+            - StaticText "  "
+          - listitem [level=1]
+            - StaticText "Features"
+            - StaticText "  "
+          - listitem [level=1]
+            - StaticText "Media & Web"
+            - StaticText "  "
+          - listitem [level=1]
+            - StaticText "Deliverable Mode"
+      - sectionheader
+        - heading "Deliverable Mode" [level=1, ref=e35]
+      - paragraph
+        - StaticText "When Hermes Agent runs inside a messaging gateway (Slack, Discord, Telegram, WhatsApp, Signal, etc.), it can deliver generated files directly into the chat — not as paths the user has to copy, but as native attachments."
+      - paragraph
+        - StaticText "A chart shows up as an inline image. A PDF report shows up as a file download. A spreadsheet uploads as "
+        - code
+          - StaticText ".xlsx"
+        - StaticText ". The agent does not need to write a "
+        - code
+          - StaticText "MEDIA:"
+        - StaticText " tag or do anything special — it just generates the file and mentions its absolute path in the response. The gateway picks the path out of the text, removes it from the visible message, and uploads the file natively."
+      - heading "How it works Direct link to How it works" [level=2, ref=e18]
+        - StaticText "How it works"
+        - link "Direct link to How it works" [ref=e36]
+          - StaticText "#"
+```
+
+## Key Structure Rules
+
+- Every node starts with a **role** (`heading`, `paragraph`, `link`, `button`, `StaticText`, `cell`, `columnheader`, `row`, `listitem`, `list`, `listmarker`)
+- Interactive elements have **[ref=eXX]** for click/type
+- State info: `[expanded=true/false]`, `[level=N]`
+- Text content lives in `StaticText "..."` — these are the actual readable words
+- `code` / `strong` / `em` are separate roles — their text is also under StaticText
+- The tree mirrors DOM nesting via indentation

@@ -708,20 +708,36 @@ LiteLLM 在原生 MCP 端点下会自动为工具名添加 server 前缀：
 for sub in sorted(skills_dir.iterdir()):
     skill_md = sub / "SKILL.md"
 
-# ✅ 递归扫描：skills/back-end/<name>/SKILL.md 也能找到
+# ✅ 方案 A（推荐 — 容许多层目录）：递归扫描
 def _scan(dir_path):
     for sub in sorted(dir_path.iterdir()):
         if not sub.is_dir():
             continue
-        # 有 SKILL.md 就收录，否则继续递归
         if (sub / "SKILL.md").is_file():
             entries.append(sub.name, ...)
         else:
-            _scan(sub)
+            _scan(sub)   # 继续下钻
 _scan(skills_dir)
+
+# ✅ 方案 B（替代 — 保持原始 load_skills 简单）：展平目录
+# 如果 skills/ 下多了一层级（如 skills/local/<name>/），可以直接移上来：
+#   mv skills/local/* skills/  &&  rmdir skills/local
+# 恢复原始 load_skills 的一级扫描即可，无需改代码。
+# 适用场景：多出的层级是分类前缀（local/、back-end/ 等）而非真正的嵌套结构。
+
+**选择策略**：递归扫描（方案 A）适用于技能库可能持续增长层级的场景；展平目录（方案 B）适用于多余层级是历史遗留且无分类价值时，优点是保持脚本简单。
+
+⚠️ **注意**：多余的 `local/` 层可能由 agent 操作失误产生（例如将 Hermes 的 `skills/local/` 目录结构错误地迁移到了 MCP 仓库）。遇到 `tools/list` 空返回且 `skills/` 下有分类子目录时，先确认这个分层是否有实际分类意义，再选方案 A 或 B。
 ```
 
 **诊断方法**：用 echo pipe 独立测试脚本（见 `references/stdio-empty-tools-debug.md`），不必依赖 LiteLLM 重启。先确认脚本本身的 `tools/list` 能返回数据，再排查 LiteLLM 侧问题。
+
+```bash
+# 快速确定实际 SKILL.md 深度
+find /path/to/skills -name SKILL.md -type f | sed 's|[^/]*/|  |g' | sort -u
+
+# 第一列缩进数就是深度，与脚本中的扫描逻辑对比即可定位问题
+```
 
 **根源**：stdout 输出了合法的 JSON-RPC 空数组结果（`{"tools": []}`），所以没有错误日志。唯一线索是 `find` 检查实际 SKILL.md 的层级与脚本扫描深度是否匹配。
 

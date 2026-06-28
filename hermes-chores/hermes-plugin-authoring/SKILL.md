@@ -189,6 +189,51 @@ Don't confuse them — the config key uses the directory path, the backend confi
 - **do NOT modify bundled plugin files** — drop user copy at `$HERMES_HOME/plugins/` instead
 - **name collision** across categories is fine (`image_gen/openai` and `tts/openai` don't collide); collision within the same category is what triggers override
 
+### 6. User plugin override vs bundled branch divergence (the "why isn't my change working" gotcha)
+
+You hack on a bundled plugin in a git branch (`feat/xxx`), make changes, verify them. But the runtime loads the **user override** at `~/.hermes/plugins/<category>/<name>/` — not the bundled copy. Your branch changes are invisible.
+
+**Diagnosis:**
+```bash
+# 1. Check which version is actually loaded at runtime
+from hermes_cli.plugins import PluginManager
+pm = PluginManager(); pm.discover_and_load()
+p = get_provider('<provider-name>')
+print(f'{type(p).__module__}.{type(p).__qualname__}')
+
+# 2. Diff bundled vs user override
+diff ~/.hermes/hermes-agent/plugins/<category>/<name>/provider.py \
+     ~/.hermes/plugins/<category>/<name>/provider.py
+
+# 3. If they differ massively, the user override is the runtime version
+```
+
+**Fix:** Apply your changes to the user override at `~/.hermes/plugins/<category>/<name>/`, or remove the user override to let the bundled version take effect. After changing: restart gateway (`systemctl --user restart hermes-gateway`) then `/reset`.
+
+### 7. CDP-extract returns empty content when raw CDP works — isolation drill
+
+When the CDP-extract plugin's `extract()` returns `content: ""` / `raw_content: ""` but a raw CDP websocket test (bypassing the plugin) succeeds:
+
+```python
+# Step 1: Verify CDP infrastructure
+# curl localhost:9222/json/version → should return 200
+# curl localhost:9222/json → list tabs
+
+# Step 2: Raw CDP test (bypass plugin layer)
+# See references/cdp-extract-debugging.md for the full script
+
+# Step 3: Trace the plugin call chain
+# extract() → _fetch_raw_html(url) → _call_readdown(html, url)
+# Each function's output feeds the next. Print intermediate values:
+#   raw = await _fetch_raw_html(url)  → check raw["html"] length
+#   rd = _call_readdown(html=raw["html"], url=url) → check rd keys
+```
+
+**Common failure modes:**
+- `_fetch_raw_html` connects to CDP and navigates correctly (title populated) but returns empty `"html"`: check `Page.setLifecycleEventsEnabled` and `lifecycleEvent(name='load')` handling — on Chrome 148+ `Page.loadEventFired` is removed
+- `_call_readdown` returns empty because `raw["html"]` was already empty (see above)
+- The result dict uses `"html"` key but downstream expects `"content"` / `"raw_content"` — field name mismatch between bundled and user plugin versions
+
 ## Quick Verification
 
 After creating a user plugin, verify it loads and registers:

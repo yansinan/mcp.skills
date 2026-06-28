@@ -1,0 +1,33 @@
+# ~/.config/systemd/user/mpv-music.service
+#
+# Keep mpv alive across Sway reload. Started on graphical-session.target so
+# it follows the Sway session lifetime. See sway-daemon-persistence skill
+# for the pattern (systemd --user binding to graphical-session.target).
+
+[Unit]
+Description=mpv music player (idle, IPC socket)
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/mpv \
+    --idle=ones \
+    --no-video \
+    --save-position-on-quit=no \
+    --input-ipc-server=/tmp/ncm-mpv.sock
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=graphical-session.target
+
+# Enable + start:
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now mpv-music.service
+#   loginctl enable-linger $USER   # so it survives logout (optional)
+#
+# Verify:
+#   systemctl --user status mpv-music
+#   playerctl -l    # should list 'mpv'
+#   ls -la /tmp/ncm-mpv.sock   # should exist

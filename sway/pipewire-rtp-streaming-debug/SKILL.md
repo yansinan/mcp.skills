@@ -111,4 +111,4 @@ context.exec = [
 
 ## References
 
-- `references/session-specific.md` — per-session debug log, may be empty or contain test results from a particular debugging session
+- `references/debug-session-x1tablet-helix.md` — per-session debug log, may be empty or contain test results from a particular debugging session
