@@ -26,6 +26,7 @@ Never change multiple parameters between tests. Per user preference:
 - **Multicast (default)**: `destination=<IP>` → RTP to `224.0.0.56`. **Suspect when** the machine has multiple network interfaces (Wi-Fi + Tailscale + Docker bridges) — multicast packets can arrive via multiple paths causing stuttering.
 - **Unicast**: `destination_ip=<IP> source_ip=<local IP> port=<port>` → direct UDP to target. Single deterministic path.
 - **Receiver delta for unicast**: Receiver needs `sap_address=0.0.0.0` to listen on all interfaces (not just multicast SAP).
+- **Always test bi-directional ping on BOTH interfaces** (LAN + Tailscale). If LAN ping fails both ways but Tailscale ping succeeds → **AP isolation** (see `references/ap-isolation-diagnosis.md`). Don't trust a single-direction test.
 
 ### Phase 2: Codec
 - **L16 (default)**: 16-bit PCM. Quantization noise is audible on quiet passages. Equivalent to CD quality but limited dynamic range.
@@ -38,6 +39,20 @@ Never change multiple parameters between tests. Per user preference:
 
 ### Phase 4: Network Tuning
 - **`mtu=1400`**: Avoid IP fragmentation for RTP packets. L16 at 48kHz stereo is ~1268 bytes/packet (header + payload). 1400 is safe.
+
+## Common Pitfalls
+
+### "/proc/net/udp IP byte-order trap"
+- `/proc/net/udp` stores addresses as 8 hex chars in **network byte order** (big-endian). To decode `6601A8C0`:
+  - Split into 2-char pairs: `66 01 A8 C0`
+  - **Reverse the pair order**: `C0 A8 01 66` (NOT reverse the whole string char-by-char)
+  - Decimal: `192.168.1.102`
+- Common misread: treating the hex string as a single big number or reversing it char-by-char would give `100.66.66.102` instead of `192.168.1.102` — this can hide a real LAN bug by making you think traffic is going to Tailscale when it's actually going to LAN (or vice versa).
+- **Tip**: when in doubt, write a 5-line decoder script (or use `socket.inet_ntoa(struct.pack('<I', int(hex, 16)))`) instead of doing it in your head. Use `scripts/decode-udp-addresses.py` to batch-decode all entries from `/proc/net/udp`.
+
+### "Sender's /proc/net/udp shows SAP port, not data port"
+- After loading `module-rtp-send`, sender's `/proc/net/udp` may show entries like `<sender-ip>:RANDOM → <receiver-ip>:9875`. This is the **SAP control socket**, NOT the RTP data path. Don't conclude "wrong port" from this — the real data socket uses the configured `port=` argument (often invisible via /proc/net/udp because PA uses sendmmsg/recvmmsg).
+- **Better proof of data flow**: on receiver, check `pactl list sink-inputs` for a row with `media-name = "RTP Stream (<sender-hostname>)"` (e.g. `RTP Stream (x1tablet)`). If that sink-input exists with s16be/opus codec, the stream is alive.
 
 ## PipeWire RTP Module Architecture
 
@@ -109,6 +124,37 @@ context.exec = [
 ]
 ```
 
+## Common Pitfalls
+
+### 1. `/proc/net/udp` hex IP 是 little-endian（字节倒序）
+看 hex 末两字节判定段：
+- `A8C0` 结尾 → 192.168.x.x
+- `0A00` 结尾 → 10.x.x.x
+- `AC10` 结尾 → 172.16.x.x
+
+`6601A8C0` ≠ `66.01.A8.C0`（直觉上是 100.66.66.102?），而是 `C0.A8.01.66` = **192.168.1.102**。
+
+端口是 big-endian 16-bit（直接十进制转 hex）：9875 → `0x2693`。
+
+辅助脚本：`scripts/decode-udp-addresses.py`（直接读 /proc/net/udp 输出 IP:port）。
+
+### 2. 不要用 `bash /dev/tcp` 测 UDP 端口
+RTP 是 UDP。`/dev/tcp` 只测 TCP，Connection refused ≠ UDP refused。
+正确：python socket (`SOCK_DGRAM` + `sendto`) 或 `nc -u`。无 ICMP unreachable = 端口可能开放。
+
+### 3. `module-rtp-recv sap_address=0.0.0.0` 实际端口不一定是 4010
+PulseAudio 可能 fallback 到其他可用端口（实测 9875）。**必须从 `ss -ulpn` 读真实端口**，不能假设。
+
+### 4. AP 隔离 / client isolation 让 LAN "看起来通但实际丢包"
+同 SSID 不同客户端之间单播被 AP 丢弃（100% packet loss），但 `ip route` / default gateway 显示正常。
+诊断组合：**双向 ping**（单向 ping 通不代表双向通，helix → 本机更准）+ Tailscale 对比。
+
+### 5. 修改 `~/.config/pipewire/pipewire-pulse.conf.d/99-rtp-send.conf` 后必须重启
+`systemctl --user restart pipewire pipewire-pulse wireplumber` 会断当前播放 1-2 秒，
+ncm-player 守护会自动重启 mpv。避免在播放关键节点操作。
+
 ## References
 
-- `references/debug-session-x1tablet-helix.md` — per-session debug log, may be empty or contain test results from a particular debugging session
+- `references/debug-session-x1tablet-helix.md` — 历史 session 详细排查记录
+- `references/ap-isolation-diagnosis.md` — **AP 隔离场景的诊断路径**（含字节序速查表 / UDP 探针方法）
+- `scripts/decode-udp-addresses.py` — 解码 `/proc/net/{udp,tcp}` hex 地址的小工具

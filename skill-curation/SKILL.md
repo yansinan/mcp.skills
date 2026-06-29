@@ -44,7 +44,12 @@ related_skills: [hermes-agent-skill-authoring, hermes-external-skills, codebase-
 2.  `description` 反映合并后的范围
 3.  删除被吸收的 skill (`skill_manage action=delete absorbed_into=<新 umbrella>`)
 
-## 参考文件
+## 实战参考
+
+- `references/git-commit-local-share-archive-orphans-2026-06-28.md` —
+  local_share 仓库 `git add -A` 时如何处理 `.archive/` 孤儿目录、
+  phantom modified（mtime 变化但内容相同的"假 modified"）、
+  以及为什么 `.gitignore` 不生效的问题。
 
 - `references/skill-optimization-patterns.md` — 迁移/优化 SKILL.md 时的精简原则
 4.  在 reference 里注明吸收来源

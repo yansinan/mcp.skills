@@ -1,6 +1,13 @@
+---
+name: pipewire-audio-routing
+description: PipeWire / PulseAudio 音频路由诊断 —— Sink/Source 路由、跨机 RTP 网络音频流、麦克风输入白噪音/无声诊断。覆盖本地默认设备切换、模块加载、RTP 拓扑、HDA codec 麦克风故障。
+---
+
 # PipeWire / PulseAudio 音频路由诊断
 
-系统化追踪"音频到底去了哪里"的方法论。涵盖本地音频链路和跨机 RTP 网络音频流。
+系统化追踪"音频到底去了哪里"的方法论。涵盖本地音频链路和跨机 RTP 网络音频流，**以及麦克风输入的诊断（白噪音、无声、声音过小）**。
+
+> 📁 **麦克风诊断专用资料**：`references/x1tablet-ALC295-mic-bug.md`（x1tablet ALC295 17aa:2263 已知 bug + 修复路径），**辅助脚本**：`scripts/mic-spectrum-probe.py`（录完 WAV 一键分析频谱，自动识别"悬空 pin"模式）。
 
 ## 四阶段排查流程
 
@@ -303,9 +310,106 @@ pactl unload-module $RTP_ID
 pactl load-module module-rtp-recv sap_address=0.0.0.0
 ```
 
+## 麦克风输入诊断（白噪音 / 无声 / 声音过小）
+
+麦克风问题 90% 不是 PipeWire 的事，是 ALSA / HDA codec 底层的事。诊断顺序：
+
+### 第 1 步：确认当前 default source
+
+```bash
+pactl get-default-source
+# → alsa_input.pci-0000_00_1f.3.analog-stereo   (笔记本内置麦)
+# → alsa_input.usb-...                            (USB 麦)
+# → alsa_input.pci-...monitor                     (某 sink 的 monitor —— 这不是真麦！)
+
+# 列出所有 source + 活跃端口
+pactl list sources short
+pactl list sources | grep -A2 "Active Port"      # analog-input-internal-mic / analog-input-mic / analog-input-headset-mic
+```
+
+如果 Active Port 是 monitor 或错误的 jack，路由没配对，先修这个。
+
+### 第 2 步：HDA codec pin 配置 —— 决定物理上哪些 pin 算输入
+
+```bash
+cat /sys/class/sound/hwC0D0/init_pin_configs
+# 例：
+#   0x12 0x90a60130   ← Internal Mic (pin 18)
+#   0x18 0x411111f0   ← No Connection
+#   0x19 0x04a11040   ← 物理是耳机孔，但 autoconfig 经常把它误判为 Mic
+#   0x21 0x04211020   ← Headphone jack
+```
+
+每个 pin config word 的解码见 `references/x1tablet-ALC295-mic-bug.md` 末尾。
+
+**关键诊断信号**：
+- pin 0x12 配置成 Internal Mic + `Default Device: A (Mic in)` → 唯一真内置麦
+- pin 0x19 物理是耳机孔但 kernel autoconfig 输出 `Mic=0x19` → autoconfig 在乱来，需要 fixup 或 hdajackretask 修正
+
+### 第 3 步：检查 kernel 是否应用了 fixup
+
+```bash
+sudo dmesg | grep -E 'alc295|hdaudio' | head -20
+# 期望看到 "picked fixup for PCI SSID 17aa:XXXX" → 有 quirk 介入
+# 如果没这句 = 内核对这套硬件没专属 quirk，跑纯 autoconfig（容易出问题）
+```
+
+**对照内核源码**确认 fixup 是否存在（v6.12）：
+```bash
+curl -sL https://raw.githubusercontent.com/torvalds/linux/v6.12/sound/pci/hda/patch_realtek.c -o /tmp/pr.c
+grep -E '0x17aa, 0x你机器的subsystem' /tmp/pr.c
+# 0 matches = 没 quirk，需要 hdajackretask 或换 SOF 驱动
+```
+
+### 第 4 步：实测录一段 + 频谱分析
+
+```bash
+arecord -D plughw:0,0 -f S16_LE -r 48000 -d 3 /tmp/probe.wav
+python3 /home/dr/.hermes/skills/local_share/sway/pipewire-audio-routing/scripts/mic-spectrum-probe.py /tmp/probe.wav
+```
+
+脚本会输出 DC 偏移 / RMS / 频谱峰值 / 分频段能量，自动判断是不是"悬空 pin"模式（白噪音经典症状）。退出码 1 = 是这个 bug。
+
+**判定标准速查**：
+| 症状 | DC 偏移 | RMS (dBFS) | 频谱特征 |
+|---|---|---|---|
+| 正常 | < 100 | < -35 | 300-3400 Hz 有峰 |
+| 悬空 pin（白噪音） | > 200 | > -30 | DC + sub-200Hz 占大头，200-8000Hz 平坦 |
+| Mute 了 | < 50 | < -60 | 全频都低 |
+
+### 第 5 步：修复路径（按代价排）
+
+1. **换 SOF 驱动**（首选，架构性修复）
+   ```bash
+   echo "options snd-intel-dspcfg dsp_driver=3" | sudo tee /etc/modprobe.d/sof-fix.conf
+   sudo update-initramfs -u && sudo reboot
+   ```
+   Skylate/KabyLake/ApolloLake/CannonLake 之后机器优先用 SOF。前提：`/usr/lib/firmware/intel/sof-tplg/` 里有匹配的 topology。
+
+2. **hdajackretask 手动 pin remap**（fallback）
+   ```bash
+   sudo apt install alsa-tools-gui
+   hdajackretask
+   ```
+   找到错误归类的 pin（如 0x19），改成 "Not connected"，勾 "Install boot override"，重启。
+
+3. **`options snd-hda-intel model=...` 强制 quirk**（针对已知相似机型的 fixup）
+   先 `grep -E 'FIXUP.*你子型号相似' /tmp/pr.c` 找到候选 fixup 名，再 `echo "options snd-hda-intel model=<fixup-name>"`。
+
+4. **外接 USB 麦**（兜底，绕开 HDA 整个问题）
+
+### x1tablet 已知坑
+
+Lenovo X1 Tablet Gen 3 (subsystem `17aa:2263`) 的 ALC295 在内核 fixup 表里**不存在条目**。症状 + 修复细节全部整理在：
+
+📁 **`references/x1tablet-ALC295-mic-bug.md`**
+
+---
+
 ## 注意
 
 - **模块 ID ≥ 500M** 表示运行时动态加载（`pactl load-module`），重启 pipewire 后丢失。必须写入 `pipewire-pulse.conf.d/` 才能持久。
 - **不要混用 `destination=` 和 `destination_ip=`** — 前者触发多播，后者触发单播。混用时最后一个参数生效。
 - **原生 `libpipewire-module-rtp-sink/source`**（PipeWire 原生模块）有更多控制参数（`local.ifname`、`sess.ts-direct`、`audio.format`），但在 PipeWire 1.4.2 上测试未成功发流（模块加载为 running 但无网络包发出），暂不可用。PipeWire ≥ 1.6 可能已修复。
 - **`format=` 参数限制**：`module-rtp-send` 只接受 `format=s16le`，更高位深（`S24_32LE`、`S32LE`、`float32le`）全部被拒。RTP payload 始终为 L16（16-bit）。想绕过此限制只能用 `enable_opus=true`。
+- **`wpctl` ID 会变**：每次 PipeWire 重启 / set-default 之后 node ID 可能变。`wpctl inspect <id>` 之前**必须重新跑 `wpctl status`** 拿当前 ID，否则可能 inspect 到一个无关设备（如 V4L2 摄像头）。

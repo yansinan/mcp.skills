@@ -47,14 +47,14 @@ cat ~/.hermes/skills/.bundled_manifest | sed 's/:.*//'
 
 在 Hermes 中执行该终端命令（background + notify）：
 
-```python
-# 在 Hermes terminal 中：
-terminal(background=true, notify_on_complete=true):
-  for name in $(cat ~/.hermes/skills/.bundled_manifest | sed 's/:.*//'); do
-    echo "$(date +%H:%M:%S) $name" >> /tmp/reset-bundle.log
-    hermes skills reset "$name" --restore --yes 2>&1 >> /tmp/reset-bundle.log
-  done
-  echo "DONE" >> /tmp/reset-bundle.log
+```bash
+# ⚠️ background subshell 不会 source ~/.bashrc，必须用绝对路径
+HERMES=/home/dr/.local/bin/hermes
+for name in $(cat ~/.hermes/skills/.bundled_manifest | sed 's/:.*//'); do
+  echo "$(date +%H:%M:%S) $name" >> /tmp/reset-bundle.log
+  $HERMES skills reset "$name" --restore --yes 2>&1 >> /tmp/reset-bundle.log
+done
+echo "DONE" >> /tmp/reset-bundle.log
 ```
 
 ### 3. 验证
@@ -74,14 +74,23 @@ hermes skills list                             # 检查 skill 状态
 hermes skills reset <name> --restore --rebaseline
 ```
 
+> ⚠️ **不存在 `hermes skills sync` 子命令** —— 截至 `hermes` v0.17.0（2026-06），
+> `skills` 的子命令是 `browse search install inspect list check update audit
+> uninstall reset list-modified diff opt-out opt-in repair-official publish
+> snapshot tap config`。Manifest 基线由 `reset --restore` 自身隐式重建，无需额外命令。
+> 误用 `hermes skills sync --quiet` 会得到：
+> `argument skills_action: invalid choice: 'sync'`
+
 ## 常见坑
 
 | 问题 | 正确做法 |
 |------|----------|
 | 把 `--yes` 当成 reset 参数 | reset 参数是 `--restore` |
 | 前台跑 70+ skill 循环超时 | 用 `terminal(background=true, notify_on_complete=true)` |
-| 恢复后 bundle 版本还在 user_modified | 重建 manifest：`hermes skills sync --quiet` |
+| 恢复后 bundle 版本还在 user_modified | 重建 manifest：`hermes skills reset --restore --rebaseline` |
 | 误以为 `--all` 存在 | Hermes 只支持逐个 reset，外部循环是唯一批量方式 |
+| `hermes skills sync --quiet` 想重建 manifest | 不存在 `sync` 子命令；`reset --restore` 已隐式重建 |
+| 批量循环里 `hermes: command not found` | 即使 `~/.bashrc` 有 `export PATH="$HOME/.local/bin:$PATH"`，**background subshell 也不会 source 它** —— 用绝对路径 `HERMES=/home/dr/.local/bin/hermes` 或显式 export |
 
 ## 参考文件
 
