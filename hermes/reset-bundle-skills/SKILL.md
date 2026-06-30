@@ -42,10 +42,22 @@ cat ~/.hermes/skills/.bundled_manifest | sed 's/:.*//'
 
 ### 2. 批量恢复（一个命令完成）
 
-> ⚠️ 70+ skill 顺序跑约 96s，前台 terminal 默认 60s 超时。
+> ⚠️ 70+ skill 顺序跑约 **76–96s**（2026-06-29 实测 72 个 = 76s），
+> 前台 terminal 默认 60s 超时。
 > **必须用 `terminal(background=true, notify_on_complete=true)`**。
 
-在 Hermes 中执行该终端命令（background + notify）：
+**优先调用现成脚本** —— `scripts/reset_bundled_skills.py` 已经封装了
+"读 manifest → 逐个 reset → 写日志 → DONE 标记"的完整循环。
+脚本位于 skill 自带的 `scripts/` 子目录下（绝对路径：
+`~/.hermes/skills/local_share/hermes/reset-bundle-skills/scripts/reset_bundled_skills.py`）。
+在 background terminal 中直接调用：
+
+```bash
+python3 ~/.hermes/skills/local_share/hermes/reset-bundle-skills/scripts/reset_bundled_skills.py
+# 或 backup 手动循环：见下
+```
+
+如果脚本不可用（路径漂移、文件被误删），手动循环 fallback：
 
 ```bash
 # ⚠️ background subshell 不会 source ~/.bashrc，必须用绝对路径
@@ -63,7 +75,11 @@ echo "DONE" >> /tmp/reset-bundle.log
 grep -c "Restored" /tmp/reset-bundle.log     # 确认恢复数量
 tail -5 /tmp/reset-bundle.log                  # DONE 在末尾
 rm -f /tmp/reset-bundle.log                    # 清理
-hermes skills list                             # 检查 skill 状态
+
+# Parse 错误 smoke test（必须）—— 重置后任何 skill 的 frontmatter
+# 或 references 损坏都会在这里暴露
+hermes skills list 2>&1 | grep -iE "error|invalid|warn" | head -10
+hermes skills list 2>&1 | wc -l               # 约 150 行（72 bundled + 50~70 local）
 ```
 
 ### 4. （可选）重建 manifest 基线
@@ -91,6 +107,9 @@ hermes skills reset <name> --restore --rebaseline
 | 误以为 `--all` 存在 | Hermes 只支持逐个 reset，外部循环是唯一批量方式 |
 | `hermes skills sync --quiet` 想重建 manifest | 不存在 `sync` 子命令；`reset --restore` 已隐式重建 |
 | 批量循环里 `hermes: command not found` | 即使 `~/.bashrc` 有 `export PATH="$HOME/.local/bin:$PATH"`，**background subshell 也不会 source 它** —— 用绝对路径 `HERMES=/home/dr/.local/bin/hermes` 或显式 export |
+| **忽略 `scripts/reset_bundled_skills.py` 现成脚本，自己重写 shell 循环** | skill 目录里已有封装好的 Python 脚本。先看 `scripts/`，再看 `references/`，最后才手写循环。脚本路径：`~/.hermes/skills/local_share/hermes/reset-bundle-skills/scripts/reset_bundled_skills.py`（绝对路径以 `~/.hermes/skills/local_share/hermes/reset-bundle-skills/` 为准，bundle 路径会随版本变化） |
+| **误以为 `related_skills: daily-system-maintenance` 是已存在的 skill** | 截至 2026-06-29 `daily-system-maintenance` 还不存在，是个 planned umbrella。四步曲 cron 直接注入 prompt，不依赖该 skill |
+| **耗时估算偏差**：实际 72 个 = 76s（不是 ~96s） | 用 `notify_on_complete=true` 后台跑，不要前台 60s 死等 |
 
 ## 参考文件
 

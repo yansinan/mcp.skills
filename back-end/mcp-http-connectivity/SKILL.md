@@ -444,6 +444,14 @@ litellm_settings:
 
 ## References
 
+- `references/mcp-spec-transports.md` — transport comparison (stdio / SSE / Streamable HTTP)
+- `references/litellm-mcp-behavior.md` — self-hosted MCP through LiteLLM proxy
+- `references/litellm-mcp-initialize-bug.md` — known init edge case
+- `references/github-copilot-direct-pat-auth.md` — PAT-auth to GitHub Copilot MCP
+- `references/github-copilot-mcp.md` — GitHub's hosted MCP via Copilot
+- `references/sep-986-naming.md` — server-name → tool-prefix naming
+- `references/kapa-ai-hosted-mcp.md` — **hosted third-party MCPs** (consumer side): kapa.ai pattern, project API key auth, URL shape `<subdomain>.mcp.<provider>.ai/`, worked `~/.hermes/config.yaml` snippet
+
 - `references/litellm-mcp-behavior.md` — Session-specific debug logs and LiteLLM v1.85.1 behavior notes
 - `references/litellm-mcp-initialize-bug.md` — liteLLM v1.85.1 MCP `initialize` handshake bug — session details, all failed variants, workaround
 - `references/mcp-spec-transports.md` — Key excerpts from MCP Streamable HTTP spec

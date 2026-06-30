@@ -234,6 +234,8 @@ When the CDP-extract plugin's `extract()` returns `content: ""` / `raw_content: 
 - `_call_readdown` returns empty because `raw["html"]` was already empty (see above)
 - The result dict uses `"html"` key but downstream expects `"content"` / `"raw_content"` — field name mismatch between bundled and user plugin versions
 
+For **installing** third-party pip-distributed plugins (not authoring), see `references/install-third-party-plugins.md`.
+
 ## Quick Verification
 
 After creating a user plugin, verify it loads and registers:
