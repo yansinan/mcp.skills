@@ -61,26 +61,49 @@ python3 ~/.hermes/skills/local_share/hermes/reset-bundle-skills/scripts/reset_bu
 
 ```bash
 # ⚠️ background subshell 不会 source ~/.bashrc，必须用绝对路径
+# ⚠️ 2026-06-30 实测：/tmp tmpfs 在 x1tablet 上是 7.7G 满，
+#    tee 写到 /tmp 会 No space left on device，必须把日志改到 /home
 HERMES=/home/dr/.local/bin/hermes
+LOG=/home/dr/.hermes/logs/reset-bundle-$(date +%Y%m%d).log
+mkdir -p /home/dr/.hermes/logs
 for name in $(cat ~/.hermes/skills/.bundled_manifest | sed 's/:.*//'); do
-  echo "$(date +%H:%M:%S) $name" >> /tmp/reset-bundle.log
-  $HERMES skills reset "$name" --restore --yes 2>&1 >> /tmp/reset-bundle.log
+  echo "$(date +%H:%M:%S) $name" >> "$LOG"
+  $HERMES skills reset "$name" --restore --yes >> "$LOG" 2>&1
 done
-echo "DONE" >> /tmp/reset-bundle.log
+echo "$(date +%H:%M:%S) DONE" >> "$LOG"
 ```
+
+**脚本必须在 hermes-agent 目录下运行**：
+
+⚠️ 2026-06-30 实测：reset_bundled_skills.py 内部 `from tools.skills_sync import`，
+依赖 PYTHONPATH。从 skill 自身目录运行会 ModuleNotFoundError。
+**必须**同时满足两件事：(a) cd 到 hermes-agent/ 源码树，(b) 把该目录
+加进 PYTHONPATH。仅 `cd` 不会自动注入路径，仍会报 ModuleNotFoundError。
+必须用 venv 里的 python（系统 python3 通常没装 hermes 的依赖）：
+
+```bash
+PYTHONPATH=/home/dr/.hermes/hermes-agent \
+  /home/dr/.hermes/hermes-agent/venv/bin/python \
+  ~/.hermes/skills/local_share/hermes/reset-bundle-skills/scripts/reset_bundled_skills.py --restore
+```
+
+2026-07-02 实测：`python3 reset_bundled_skills.py` → ModuleNotFoundError；
+补上 PYTHONPATH 后 72 个 skill 11s 内全部 OK。
 
 ### 3. 验证
 
 ```bash
-grep -c "Restored" /tmp/reset-bundle.log     # 确认恢复数量
-tail -5 /tmp/reset-bundle.log                  # DONE 在末尾
-rm -f /tmp/reset-bundle.log                    # 清理
+LOG=/home/dr/.hermes/logs/reset-bundle-$(date +%Y%m%d).log
+grep -c "Restored" "$LOG"      # 确认恢复数量
+tail -5 "$LOG"                 # DONE 在末尾
 
 # Parse 错误 smoke test（必须）—— 重置后任何 skill 的 frontmatter
 # 或 references 损坏都会在这里暴露
 hermes skills list 2>&1 | grep -iE "error|invalid|warn" | head -10
 hermes skills list 2>&1 | wc -l               # 约 150 行（72 bundled + 50~70 local）
 ```
+
+> ⚠️ 日志写 `/home/dr/.hermes/logs/`，**不要写 /tmp**（x1tablet 的 /tmp 是 8G tmpfs，可能写满）。
 
 ### 4. （可选）重建 manifest 基线
 
@@ -110,6 +133,13 @@ hermes skills reset <name> --restore --rebaseline
 | **忽略 `scripts/reset_bundled_skills.py` 现成脚本，自己重写 shell 循环** | skill 目录里已有封装好的 Python 脚本。先看 `scripts/`，再看 `references/`，最后才手写循环。脚本路径：`~/.hermes/skills/local_share/hermes/reset-bundle-skills/scripts/reset_bundled_skills.py`（绝对路径以 `~/.hermes/skills/local_share/hermes/reset-bundle-skills/` 为准，bundle 路径会随版本变化） |
 | **误以为 `related_skills: daily-system-maintenance` 是已存在的 skill** | 截至 2026-06-29 `daily-system-maintenance` 还不存在，是个 planned umbrella。四步曲 cron 直接注入 prompt，不依赖该 skill |
 | **耗时估算偏差**：实际 72 个 = 76s（不是 ~96s） | 用 `notify_on_complete=true` 后台跑，不要前台 60s 死等 |
+| **`tee` 写到 /tmp 报 `No space left on device`** | x1tablet 上 /tmp 是 8G tmpfs，cron 启动时可能 100% 满（用户不可见文件撑满）。**永远把循环日志写到 `/home/dr/.hermes/logs/reset-bundle-YYYYMMDD.log`**，不要写 /tmp |
+| **`cd hermes-agent` 后仍报 `ModuleNotFoundError: No module named 'tools'`** | 2026-07-02 实测：`cd` 不会自动把 cwd 加进 `sys.path`，`from tools.skills_sync import` 仍找不到模块。**必须显式 `PYTHONPATH=/home/dr/.hermes/hermes-agent`**，并且用 venv 里的 python：`/home/dr/.hermes/hermes-agent/venv/bin/python`。系统 `python3` 缺少 hermes 依赖也会失败 |
+| **reset_bundled_skills.py 报 `ModuleNotFoundError: No module named 'tools'`** | 脚本内部 `from tools.skills_sync import`，必须 `cd /home/dr/.hermes/hermes-agent && python3 ...` 运行。从 skill 自身目录或 cron cwd 跑都会失败 |
+| **reset_bundled_skills.py 报 `ImportError: cannot import name 'reset_bundled_skill' from 'tools.skills_sync'`**（2026-11-27 实测） | `reset_bundled_skill` 已从 `tools.skills_sync` 移到 `tools.skills_sync_bundled_ops`。脚本里拆成两行 import：`from tools.skills_sync import _discover_bundled_skills, _get_bundled_dir` + `from tools.skills_sync_bundled_ops import reset_bundled_skill` |
+| **批量 reset 大量返回 `FAIL bundled_missing`**（2026-11-27 实测） | 该 skill 在 repo `skills/` 树里没有副本（只存在于 `optional-skills/`）。`reset` 只能解析 repo 树内的路径 → 改用 `hermes skills repair-official <name> --restore --yes` 恢复，会自动备份到 `~/.hermes/skills/.restore-backups/official-optional-<ts>` |
+| **reset 只跑一遍不够**：manifest 里的可选 skill 不在 bundle 目录 | 遍历 `.bundled_manifest` 全部名字（`sed 's/:.*//'`），而不是只跑 `_discover_bundled_skills(bundled_dir)` 返回的子集——后者只覆盖 repo 内的 44 个 |
+| **ccr 把 terminal 输出压成空字符串** | `df -h`、`ls -la /tmp/` 等长输出可能被 headroom ccr 压到 <1KB。绕道：把输出 redirect 到 `/home/dr/.hermes/_chk.txt`，用 `read_file` 读出，或 `split -l 1` 拆成单行文件逐行 read |
 
 ## 参考文件
 

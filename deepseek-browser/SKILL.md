@@ -1,0 +1,169 @@
+---
+name: deepseek-browser
+description: "Use when you need DeepSeek's web-based Smart Search via CDP browser. Best for retrieving up-to-date information with source links, searching the web and synthesizing answers, getting cited references. Not for simple queries or bulk requests."
+version: 1.0.0
+author: Hermes Agent
+license: MIT
+metadata:
+  hermes:
+    tags: [search, deepseek, browser, cdp, smart-search]
+    related_skills: [browser-content-extraction]
+---
+
+# DeepSeek Browser Smart Search
+
+## Overview
+
+Drives DeepSeek's web chat (chat.deepseek.com) via CDP browser to use its **Smart Search** capability — searches the web, reads multiple sources, and synthesizes structured answers with **cited source links** (the most valuable output).
+
+## When to Use
+
+- Need **up-to-date info** requiring web search (beyond model knowledge cutoff)
+- Need **source links/citations** to verify facts
+- Question is complex enough to warrant cross-source synthesis
+- `web_search` alone returns shallow/conflicting results
+
+**Don't use for:** simple factual queries (use `web_search` directly), bulk/concurrent requests, sub-second response needs.
+
+## Timing Reference
+
+Measured from experiment (new conversation, Smart Search already enabled by default):
+
+| Time | Event |
+|------|-------|
+| t=0 | Send message |
+| t=2s | URL switches to new conversation ID, title auto-generated |
+| **t=4s** | **Response content starts streaming in** |
+| t=6s | Full response with all citations present |
+
+**Optimal wait: 6 seconds.** HTML delta ~23KB. Max fallback: poll every 2s up to 30s.
+
+## Workflow
+
+### 1. Navigate to DeepSeek
+
+Open `https://chat.deepseek.com/` in the browser. Wait for textarea to be present (`placeholder="Message DeepSeek"`).
+
+### 2. Type the question
+
+React SPA — `.value` assignment alone won't trigger state. Use **native input value setter**:
+
+```js
+var ta = document.querySelector('textarea');
+var setter = Object.getOwnPropertyDescriptor(
+  window.HTMLTextAreaElement.prototype, 'value'
+).set;
+setter.call(ta, '<QUESTION>');
+ta.dispatchEvent(new Event('input', {bubbles: true}));
+ta.dispatchEvent(new Event('change', {bubbles: true}));
+```
+
+### 3. Send
+
+```js
+document.querySelector('.ds-button--primary').click();
+```
+
+Button is disabled until Step 2 correctly triggers React state.
+
+### 4. Wait
+
+`sleep 6` or poll every 2s (max 30s). Stop early when `html.indexOf('Read') >= 0 && html.indexOf('ds-assistant-message') >= 0`.
+
+### 5. Extract answer text
+
+```js
+var answer = document.querySelectorAll('.ds-markdown');
+// answer[0].textContent contains the full structured response
+```
+
+### 6. Extract source links (THE MOST VALUABLE OUTPUT)
+
+```js
+var links = document.querySelectorAll('a[href^="http"]');
+// Filter out deepseek.com domains:
+Array.from(links).filter(a => a.href.indexOf('deepseek.com') === -1).map(a => a.href)
+```
+
+### 7. (Optional) Verify links
+
+Use `web_extract` on the extracted links to read full source pages.
+
+## What Smart Search Returns
+
+- **Reading summary**: "Read N web pages" at the top of the assistant message
+- **Structured answer**: Markdown with headings, lists, tables, code blocks
+- **Inline citations**: Numbered references like `[-1]`, `[-5]` in the text
+- **Source links**: GitHub repos, PyPI pages, ArXiv papers, blog posts, news articles
+- **Disclaimer**: "AI-generated, for reference only"
+
+**Smart Search is enabled by default** — no toggle needed.
+
+## Real Example Output
+
+For question "开源语音 AI 项目有哪些比较流行？请搜索后列出 3-5 个，给出网址":
+- 11 source links extracted (GitHub repos, PyPI, ArXiv, tech news)
+- 5 projects: ESPnet, PaddleSpeech, Pipecat, Sherpa-ONNX, AURA
+- Each with GitHub URL, description, and key features
+
+## Common Pitfalls
+
+1. **React state not triggered** — `ta.value = '...'` won't work. Must use `Object.getOwnPropertyDescriptor(...).set.call(ta, value)` + dispatch `input`/`change`.
+
+2. **SPA navigation confusion** — "New chat" click on main page may redirect to last active conversation instead of creating new. Fix: navigate to `chat.deepseek.com/` fresh before sending.
+
+3. **Stale DOM cached** — Previous conversation data stays in DOM after navigation. Check `window.location.href` to confirm conversation ID is new.
+
+4. **Page takes time to load** — First navigation can take 5-10s. Don't type until `document.querySelector('textarea')` exists.
+
+5. **Send button disabled** — If `.ds-button--primary` has class `ds-button--disabled`, re-do Step 2 properly.
+
+6. **Message appended to old conversation** — If URL doesn't change after sending, navigate to `chat.deepseek.com/` first to reset.
+
+## Extracting Content with Python Script (Recommended)
+
+After the response is generated, use the companion Python script to extract structured JSON — avoids the model parsing raw HTML (saves tokens):
+
+```bash
+python3 scripts/extract_deepseek.py --pretty
+# Or target a specific conversation:
+python3 scripts/extract_deepseek.py --url https://chat.deepseek.com/a/chat/s/<uuid>
+```
+
+**Output format:**
+
+```json
+{
+  "title": "<auto-generated conversation title>",
+  "answer_text": "<full markdown answer with citations>",
+  "source_links": [
+    "https://github.com/pipecat-ai/pipecat",
+    "https://pypi.org/project/..."
+  ],
+  "web_pages_read": 10,
+  "conversation_url": "https://chat.deepseek.com/a/chat/s/<uuid>"
+}
+```
+
+The script:
+- Connects to Chrome CDP (default port 9222, configurable via `--port`)
+- Finds the DeepSeek tab automatically, or navigates to a given URL
+- Waits up to 30s for the response if not yet loaded
+- Extracts `.ds-markdown` text + external source links + "Read N web pages"
+- Outputs clean JSON (no raw HTML overhead)
+
+Script location: `~/.hermes/skills/local_share/deepseek-browser/scripts/extract_deepseek.py`
+
+You can pipe the JSON through `jq` to get just the links:
+```bash
+python3 scripts/extract_deepseek.py --pretty | jq '.source_links[]'
+```
+
+## Verification Checklist
+
+- [ ] Page loaded: textarea exists with "Message DeepSeek" placeholder
+- [ ] Question typed using nativeInputValueSetter pattern
+- [ ] Send button enabled (no `disabled` class)
+- [ ] URL changed to `/a/chat/s/<new-uuid>`
+- [ ] `.ds-markdown` elements contain the answer
+- [ ] Source links extracted via `scripts/extract_deepseek.py`

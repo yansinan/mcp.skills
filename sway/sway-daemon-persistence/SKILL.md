@@ -90,6 +90,8 @@ WantedBy=graphical-session.target
 - `WantedBy=graphical-session.target` — **开机/登录时自动启动**
 - `Type=simple` — **前台进程**（ExecStart 的命令不要 daemonize 自己）
 
+**ExecStart 推荐写法**：**单行 `swayidle -w`**，让 swayidle 读 `~/.config/swayidle/config` 里的单行规则。**不要在 ExecStart 写多行 `timeout/resume` 命令**——swayidle 的 `resume` 关键字不接受 timeout 参数，写错会让 service 进入 2s 死循环（见 pitfall #11）。
+
 ### Step 2: 安装 + 启用
 
 ```bash
@@ -281,6 +283,19 @@ fi
 
 **解决**：用 `kill -9 <PID>` 强杀 + `systemctl --user reset-failed` + `systemctl --user start swayidle.service`。
 
+## Node.js/V8 服务注意事项
+
+`MemoryDenyWriteExecute=true` 会导致 Node.js/V8 进程 SIGTRAP 崩溃（`Check failed: 12 == (*__errno_location ())`）。V8 JIT 编译器需要写入可执行内存页。
+
+对于 code-server 等 bundle Node 的服务，建议：
+```ini
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+```
+
+详见 `references/v8-memorydenywriteexecute-trap.md`。
+
 ## 诊断模式
 
 ### 检查 swayidle 是否真的连上了 sway
@@ -332,8 +347,11 @@ grep -E "mark|screensaver|suspend|跳过"
 - `sway-version-upgrade-pitfalls.md` — sid 源临时升级 sway/swayidle 的步骤与 dpkg conffile 处理
 - `swayidle-wrapper-default-daemon-pitfall.md` — swayidle fork 出的 sh+python 陷入 main loop 的陷阱
 - `swayidle-parse-command-argv0-bug.md` — swayidle 命令解析 argv0 bug
+- `swayidle-resume-no-timeout-pitfall.md` — `resume` 关键字不接受 timeout 参数（man 没写清楚，swayidle 报 `Unsupported command` exit 255 循环刷日志）
 - `swayidle-config-edit-recovery.md` — config 编辑后恢复流程（清理孤立进程、重启验证）
 - `idle-not-triggering-diagnosis.md` — idle 不触发的系统性诊断工作流（7 步清单含引号/SWAYSOCK/before-sleep 检查）
+- `cgroup-cleanup-restart-storm.md` — `ExecStopPost=cgroup_cleanup` + `Restart=always` 风暴模式（hermes-gateway 697 次重启案例 + 修复决策树）
+- `cgroup-cleanup-restart-storm.md` — `ExecStopPost=cgroup_cleanup` + `Restart=always` 风暴模式（hermes-gateway 697 次重启案例）
 
 ## 边界情况
 
@@ -400,10 +418,22 @@ dr ALL=(ALL) NOPASSWD: /usr/bin/systemctl suspend, /usr/bin/systemctl hibernate,
 
 sway 从 TTY 手动启动（无 display manager）时，graphical-session.target 默认不 active。
 
+**症状**：`loginctl show-session` 输出 `Type=unspecified`（不是 `wayland`/`x11`）→ systemd-logind 没把会话标记成图形会话 → 不会自动激活 user@.service 下的 `graphical-session.target` → 所有 `BindsTo=` 它的服务（swayidle / sway-session / mako / waybar 等）保持 `inactive (dead)` 静默不跑。系统正常运转但屏保、布局自动保存、idle 检测全失效。
+
 **解决**：sway config 里显式启动：
 ```
 exec systemctl --user start graphical-session.target
 ```
+
+**验证**：
+```bash
+loginctl show-session $(loginctl | awk 'NR==2{print $1}') | grep -E 'Type|Active'
+# 应输出: Type=wayland (或 x11) / Active=yes
+systemctl --user is-active graphical-session.target
+# 应输出: active
+```
+
+**完整诊断流程**（含 `systemctl list-dependencies graphical-session.target` 看哪些服务死掉、`systemctl --user show <service>` 查 `ConditionResult=no` 定位 systemd 拒绝拉起的原因）：见 `references/idle-not-triggering-diagnosis.md`。
 
 或让 systemd service 采用 `WantedBy=default.target` 兜底（但这样 sway 退出后无法自动停）。
 
@@ -470,6 +500,61 @@ kill <多余PID>
 ### 10. swayidle.service RestartSec 2s 避免日志洪泛
 
 `RestartSec=2` 在 crash-restart 循环时防止 journal 被刷屏。经验值：`RestartSec=0` 或 `1` 导致 swayidle 连续 crash 日志翻几十倍，`RestartSec=2` 已够用。
+
+### 11. swayidle `resume` 关键字不接受 timeout 参数（man 没说清）
+
+**症状**：在 swayidle ExecStart 或 config 写：
+```
+timeout 60 'X --mark-idle' resume 60 'X --mark-active'
+```
+启动报 `[Line 884] Unsupported command 'X --mark-active'` exit 255 → Restart=always 2s 后再拉 → 同样错 → 循环刷日志。
+
+**根因**：swayidle `main.c` 解析 argv 时，`timeout <N> <cmd>` 是 `<N> <cmd>` 两个 token，`resume <cmd>` 是**单一 token 接命令**。man 写 `[resume <resume command>]` 但容易误读成 `resume <timeout> <command>`。第二个数字 `60` 被 swayidle 解析成 `resume` 的 command 字符串，但因命令带 `--` 参数（`X --mark-active`）整体 token 解析失败。
+
+**正确写法**：
+```
+# service ExecStart 写多行（最常见错）
+# ❌ 错
+timeout 60 'X --mark-idle' resume 60 'X --mark-active'
+
+# ✅ 正确
+timeout 60 'X --mark-idle' resume 'X --mark-active'
+
+# 最佳实践：让 swayidle 读 ~/.config/swayidle/config 单行格式
+# ExecStart=/usr/bin/swayidle -w
+# 配置文件里单行一条 rule，逐行写
+```
+
+**自动诊断**：
+```bash
+journalctl --user -u swayidle.service --no-pager | grep -E 'Unsupported command'
+# 出现即此坑
+```
+
+详见 `references/swayidle-resume-no-timeout-pitfall.md`（含完整调试日志、为什么 60 在第二个位置就触发、正确的 ~/.config/swayidle/config 模板）。
+
+### 12. 启停时 cgroup cleanup 集体 SIGKILL 辅助进程
+
+**模式**：systemd --user service 启动时 `subprocess.Popen` 拉长寿命辅助进程（Chrome、agent-browser、长轮询 worker 等），service 退出时 `ExecStopPost=` 跑一个清理脚本扫自己 cgroup，把所有进程 SIGKILL（防 systemd 重启卡住）。
+
+**风险**：
+- service 有 `Restart=always` + 短 `RestartSec` + 启动期校验失败快速退出 → 每次重启 SIGKILL 整组辅助进程 → 用户观察到"辅助进程反复开关"
+- 实测：hermes-gateway.service 因 weixin 配置校验失败 13 秒死循环一次，**697 次重启** → 期间 `~/.config/google-chrome/.../SingletonLock` 反复被 SIGKILL → 用户感知"浏览器反复开关"
+
+**诊断**：
+```bash
+journalctl --user -u <service>.service -n 200 --no-pager | grep -E 'Killing process|Scheduled restart'
+# 看到大量 "Killing process <PID> (chrome) with signal SIGKILL" + "Scheduled restart job"
+# 计数 N 秒内的 restart 次数 = 真实频率
+```
+
+**解决方向**（按优先级）：
+1. **修启动失败根因**（配置/参数错误）—— 几乎所有"cgroup 风暴"根因都是这个
+2. `Restart=always` 改 `Restart=on-failure` + 加 `StartLimitBurst=` / `StartLimitIntervalSec=` 节流
+3. service 加 `Delegate=true` + 用 `Slice=` 给辅助进程独立 cgroup 子树（systemd 233+）
+4. 在 ExecStartPre 里 `pkill -f <helper>` 旧实例，避免多实例同时跑
+
+详见 `references/cgroup-cleanup-restart-storm.md`（含 hermes-gateway 完整诊断链、`ExecStopPost=cgroup_cleanup.py` 模式溯源、修复决策树）。
 
 ## 外部组件启动模式（sway 级，归此处）
 

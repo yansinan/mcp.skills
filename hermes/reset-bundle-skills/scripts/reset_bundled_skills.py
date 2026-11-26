@@ -29,7 +29,10 @@ def main() -> int:
         restore = True
 
     # Hermes imports live from its venv/wrapper; keep import local.
-    from tools.skills_sync import _discover_bundled_skills, _get_bundled_dir, reset_bundled_skill
+    # 2026-11-27: reset_bundled_skill moved out of tools.skills_sync into
+    # tools.skills_sync_bundled_ops; the old import path raises ImportError.
+    from tools.skills_sync import _discover_bundled_skills, _get_bundled_dir
+    from tools.skills_sync_bundled_ops import reset_bundled_skill
 
     bundled_dir = _get_bundled_dir()
     bundled = [name for name, _ in _discover_bundled_skills(bundled_dir)]

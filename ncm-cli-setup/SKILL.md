@@ -187,7 +187,12 @@ try:
 except: pass
 ```
 
-**行为**：\n- 首次 like → ❤ 显示\n- 切歌 → 自动复位 ♡（`current_encrypted_id` 变了）\n- 同首歌再 like → 幂等（ncm-cli song like 可重复调用），图标仍 ❤\n\n**不支持的**：取消红心（ncm-cli 无 dislike 命令）。
+**行为**：
+- 首次 like → ❤ 显示
+- 切歌 → 自动复位 ♡（`current_encrypted_id` 变了）
+- 同首歌再 like → 幂等（ncm-cli song like 可重复调用），图标仍 ❤
+
+**不支持的**：取消红心（ncm-cli 无 dislike 命令）。
 
 ### 多源 state 文件 + race condition 修法（v3，2026-06-24）
 
@@ -712,7 +717,7 @@ sway ─┬─ exec_always mpv (守护进程)
                  └─ ncm-* 模块 → 读 /tmp/ncm-state.json (零 ncm-cli)
 ```
 
-daemon 模式的关键代码在 `ncm-player` 脚本的 `daemon` case 中。完整实现记录见 `ncm-state-daemon` 技能 `references/ncm-state-daemon.md`。
+daemon 模式的关键代码在 `ncm-player` 脚本的 `daemon` case 中。完整实现记录见 `references/event-driven-cache-architecture-2026-06-24.md`（v3 事件驱动缓存架构、daemon 退化为慢速兜底）。
 
 **注意**：sway `exec_always` 中 `nohup` 必须加 —— `bash -c 'cmd &'` 退出时子进程被 kill。正确写法：
 
@@ -1110,7 +1115,8 @@ cat /tmp/ncm-state.json             # 应有最新状态
 |---|---|---|---|
 | 播放/暂停/切歌/音量 | ✅ | ❌ (只调桌面客户端) | ncm-cli 通过 mpv 播放 |
 | 搜索歌曲/专辑/歌单 | ✅ (`search song/album/playlist/all`) | ✅ | ncm-cli 登录后可用 |
-| `playlist` | `ncm-cli playlist created/collected/get/tracks/add/remove` | ❌ | ncm-cli 登录后可用 |\n| 红心/取消红心 | ✅ (`song like`) | ❌ | ncm-cli 登录后可用，无 dislike |
+| `playlist` | `ncm-cli playlist created/collected/get/tracks/add/remove` | ❌ | ncm-cli 登录后可用 |
+| 红心/取消红心 | ✅ (`song like`) | ❌ | ncm-cli 登录后可用，无 dislike |
 | 心动模式 | ✅ (`recommend heartbeat`) | ❌ | ncm-cli 登录后可用 |
 | 每日推荐 | ✅ (`recommend daily`) | ✅ (`recommend songs`) | 两者均可 |
 | 私人漫游(FM) | ✅ (`recommend fm`) | ❌ | ncm-cli 登录后可用 |
@@ -1128,5 +1134,4 @@ cat /tmp/ncm-state.json             # 应有最新状态
 - `references/login-gated-commands.md` — ncm-cli 登录后解锁的全部命令列表与 JSON 响应格式
 - `references/ncm-go-binary.md` — ncm Go 二进制信息（已废弃）
 - `references/ncm-cli-backend.md` — ncm-cli 替代 api-enhanced 的安装与切换说明（历史文档）
-- `ncm-state-daemon/references/ncm-daemon-patterns.md` — 登录门控 + mpris 优化细节
-- `waybar-config/references/player-module-audit-2026-06-23.md` — 完整模块审计
+- `references/event-driven-cache-architecture-2026-06-24.md` — daemon v3 事件驱动缓存架构、登录门控 + mpris 优化细节

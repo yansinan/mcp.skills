@@ -91,4 +91,4 @@ GET http://serverhome/litellm/headroom/stats
 python3 /home/dr/.local/bin/waybar-headroom-stats.py | python3 -m json.tool
 ```
 
-Tooltip 调试见 `waybar-config` 技能的 `references/tooltip-debugging.md`（Pango 标记、tag 平衡、hover 覆盖问题排查）。
+Tooltip 调试见 `references/tooltip-debugging.md`（Pango 标记、tag 平衡、hover 覆盖问题排查）。
