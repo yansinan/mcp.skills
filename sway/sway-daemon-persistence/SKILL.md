@@ -38,7 +38,7 @@ sway 启动 → graphical-session.target active
 | sway-session daemon | ✗ 只保留 restore 行 | ✓ daemon 部分 | restore 一次性、daemon 长跑 |
 | 屏保 | ✗ 注释掉 | ✓ 全托管 | 或由 swayidle timeout 触发 |
 | kanshi | ✗ 用 exec（auto swap 不需要持久化） | 可选 | 自动显示器切换，一般 crash 概率低 |
-| waybar/wob | ✗ 不推荐 | 可选 | sway bar 类自带内置重启机制 |
+| waybar/wob | ✗ 不推荐 | 可选 | **waybar 没有内置重启机制** —— `exec_always` 重跑时不会 SIGTERM 旧实例，reload 累积（3 次 reload → 6 个进程）。改用 `bash -c 'killall -e waybar; ...'` 方案，见「外部组件启动模式」节 |
 
 ## Implementation
 
@@ -351,7 +351,6 @@ grep -E "mark|screensaver|suspend|跳过"
 - `swayidle-config-edit-recovery.md` — config 编辑后恢复流程（清理孤立进程、重启验证）
 - `idle-not-triggering-diagnosis.md` — idle 不触发的系统性诊断工作流（7 步清单含引号/SWAYSOCK/before-sleep 检查）
 - `cgroup-cleanup-restart-storm.md` — `ExecStopPost=cgroup_cleanup` + `Restart=always` 风暴模式（hermes-gateway 697 次重启案例 + 修复决策树）
-- `cgroup-cleanup-restart-storm.md` — `ExecStopPost=cgroup_cleanup` + `Restart=always` 风暴模式（hermes-gateway 697 次重启案例）
 
 ## 边界情况
 
@@ -578,7 +577,7 @@ exec_always bash -c 'killall -e waybar 2>/dev/null; sleep 0.3; waybar -c ~/.conf
 ```
 
 **关键点**：
-- `killall -e waybar` — `-e` = exact name match（**不是 `-x`，那是 pkill 的 flag**）。杀进程名精确为 `waybar` 的所有进程，但**不杀 bash 自身**（bash 进程名是 `bash`）
+- `killall -e waybar` — `-e` = exact match（**不是 `-x`，那是 pkill 的 flag**）。杀进程名精确为 `waybar` 的所有进程，但**不杀 bash 自身**（bash 的 argv[0] 是 `bash`，不是 `waybar`）。`man killall`：`-e` 专门用于 *"Require an exact match for very long names"* —— 进程名 >15 字符时 `killall` 默认只匹配前 15 字符，`-e` 要求完全相等。
 - `sleep 0.3` — 给旧 waybar 退出缓冲（关 GTK/GPU 需要时间）
 - **单条 exec_always 包两个 waybar**——避免两条 exec_always 互相杀的 race condition
 - `&` 后台启动 + `wait` 保活——sway 追踪 bash 进程；sway reload SIGTERM bash 时 bash 退出触发 `&` children 收到 SIGHUP 一起退出
@@ -594,7 +593,7 @@ exec_always exec waybar -c ~/.config/waybar/config-bottom
 
 **❌ 不要用 `pkill -f "waybar -c"`**：bash 的 cmdline 包含 `waybar -c ~/.config/waybar/config-top`，`pkill -f "waybar -c"` 会匹配 bash 进程自身 → bash 死在 `sleep 0.3` 之前 → 新 waybar 永远不启动。
 
-**详细排查 + 重载验证流程**：见 `waybar-config` 技能"## Pitfalls → Sway config: waybar 启动方式（2026-06-24 修正——之前推荐写法有 bug）"节。
+**详细排查 + 重载验证流程**：见本技能「外部组件启动模式（sway 级，归此处）」节（`waybar-config` 技能已归档，其 waybar 启动 pitfall 已并入本节）。
 
 **从外部 shell 手动启动时**才需要显式设 SWAYSOCK：
 ```bash
@@ -628,7 +627,7 @@ systemctl --user stop ncm-state-daemon.service
 
 **旧建议修正**：之前声称 "sway reload 自动 SIGTERM 旧的 exec_always 进程组，不需要手动清理"——该结论对 while 循环不成立。sway 的进程组信号对嵌套 bash -c while 模式有遗漏。
 
-**对 waybar 不需要这种修复**：waybar 没有 while 循环，单纯的 `exec_always exec waybar` 就够了（sway 自动管 PID）。见上文 "SWAYSOCK stale env" 节。
+**对 waybar 不需要这种脚本化修复**：waybar 没有 while 循环，所以不需要抽独立脚本。但它**仍然需要显式 kill** —— `exec_always exec waybar` 不会 SIGTERM 旧实例，reload 累积（3 次 reload → 6 个进程）。waybar 的正确解法是 `bash -c 'killall -e waybar; ...'` 一条命令包两个实例，见上文 "SWAYSOCK stale env" 节。
 
 > **2026-06-24 已弃用**：此独立脚本模式已合并到 ncm-player daemon 自身。SWAYSOCK 通过文件传递（见下方「sway 退出检测：SWAYSOCK 文件传递」节），systemd 管理单实例，不再需要独立 watch 脚本。
 
@@ -742,7 +741,6 @@ systemctl --user stop ncm-state-daemon.service
 |---|---|---|
 | swayidle / mpv / 长时间守护进程 | systemd --user + BindsTo=graphical-session.target | 见本文档主方案 |
 | 一次性脚本（登录后启动的帮手） | sway `exec`（不是 exec_always） | sway reload 不重复 |
-| **waybar** | sway `exec_always exec waybar -c <config>`（不要 bash 包装） | sway 自动管 PID + 自动设 SWAYSOCK |
 | **waybar** | sway `exec_always bash -c 'killall -e waybar; sleep 0.3; waybar ... & waybar ... & wait'` | sway reload 时显式 kill 旧 waybar + bash wait 兜底避免 zombie |
 
 **为什么 waybar 用 bash 包装 + killall 而非 `exec_always exec waybar`**：
@@ -750,7 +748,7 @@ systemctl --user stop ncm-state-daemon.service
 - `bash -c 'killall -e waybar; ...'` 显式杀旧 waybar → 0.3s 缓冲 → 启新 → `wait` 保活
 - `&` 后台启动 + `wait` → sway 追踪 bash 进程；reload SIGTERM bash 时 bash 退出触发 `&` children 收到 SIGHUP 一起退出
 - 单条 exec_always 包两个 waybar → 避免两条 exec_always 互相杀的 race condition
-- 详细 pitfall 见 `waybar-config` 技能"## Pitfalls → Sway config: waybar 启动方式（2026-06-24 修正——之前推荐写法有 bug）"节
+- 详细 pitfall 见本技能「外部组件启动模式（sway 级，归此处）」节（`waybar-config` 技能已归档，内容已并入本节）
 
 **为什么用 `nohup ... &` 而不是 `exec`**：`exec` 下 daemon 启动失败时没有任何错误输出。`nohup` + 日志文件可查 `/tmp/ncm-daemon.log` 定位问题。
 
