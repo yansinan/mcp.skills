@@ -139,7 +139,33 @@ hermes skills reset <name> --restore --rebaseline
 | **reset_bundled_skills.py 报 `ImportError: cannot import name 'reset_bundled_skill' from 'tools.skills_sync'`**（2026-11-27 实测） | `reset_bundled_skill` 已从 `tools.skills_sync` 移到 `tools.skills_sync_bundled_ops`。脚本里拆成两行 import：`from tools.skills_sync import _discover_bundled_skills, _get_bundled_dir` + `from tools.skills_sync_bundled_ops import reset_bundled_skill` |
 | **批量 reset 大量返回 `FAIL bundled_missing`**（2026-11-27 实测） | 该 skill 在 repo `skills/` 树里没有副本（只存在于 `optional-skills/`）。`reset` 只能解析 repo 树内的路径 → 改用 `hermes skills repair-official <name> --restore --yes` 恢复，会自动备份到 `~/.hermes/skills/.restore-backups/official-optional-<ts>` |
 | **reset 只跑一遍不够**：manifest 里的可选 skill 不在 bundle 目录 | 遍历 `.bundled_manifest` 全部名字（`sed 's/:.*//'`），而不是只跑 `_discover_bundled_skills(bundled_dir)` 返回的子集——后者只覆盖 repo 内的 44 个 |
+| **`bundled_missing` 不是失败，是"这个 skill 在 optional-skills/ 里"**（2026-11-29 实测） | manifest 53 条里只有 13 条在 repo `skills/` 树，21 条在 `optional-skills/`。`reset_bundled_skill()` 返回 `bundled_missing` 时改调 `restore_official_optional_skill(name, restore=True)` 即可，**21 条全部恢复且与上游逐字节一致**。只有既不在 repo 树也不在 optional 的才是真失败（2026-11-29：19 条，全是 hub 装的或上游已删） |
+| **`hermes skills sync --quiet` 报 `invalid choice: 'sync'`** | 2026-11-29 再次确认：不存在 `sync` 子命令。重建 manifest 基线用 `hermes skills reset <name> --restore --rebaseline`，或直接 `reset --restore`（隐式重建）。见下方"关于 `hermes skills sync`" |
+| **要判断"是否真的被改过"，用 `hermes skills list-modified` 而不是比对文件** | 2026-11-29 实测：`list-modified` 输出 *"No user-modified bundled skills — everything tracks upstream"*。手工 diff 会因为 manifest 记的是 hash、目录路径推导方式不同而误报 drift（踩过两次假报警：`DIFFERS` ×13、`MISSING` ×31） |
+| **改 skill 前先确认它不是远端 submodule 的一部分** | `~/.hermes/skills/local_share` 的 remote `git@github.com:yansinan/mcp.skills.git` 同时是 `~/workspace/hermes-chores.mcp` 的 **git submodule**（`.gitmodules: path=skills`）。工作树里的删除如果提交上去，会让 serverhome 的 mcpChores live submodule 丢文件。判断方法：`git ls-tree -r --name-only origin/main \| wc -l` 对比提交前后的文件数 |
 | **ccr 把 terminal 输出压成空字符串** | `df -h`、`ls -la /tmp/` 等长输出可能被 headroom ccr 压到 <1KB。绕道：把输出 redirect 到 `/home/dr/.hermes/_chk.txt`，用 `read_file` 读出，或 `split -l 1` 拆成单行文件逐行 read |
+
+## 关于 `hermes skills sync`
+
+**`hermes skills sync` 不存在**（2026-06 首次发现，2026-11-29 再次实测确认）：
+
+```bash
+$ hermes skills sync --quiet
+hermes skills: 'sync' is not a `hermes skills` command.
+```
+
+`hermes skills` 的子命令是：`browse search install inspect list check update audit
+uninstall reset list-modified diff opt-out opt-in repair-official publish snapshot tap config`。
+
+重建 manifest 基线的两条正确路径：
+
+```bash
+# 1) reset --restore 本身就隐式重建 manifest（日常用这个）
+hermes skills reset <name> --restore --yes
+
+# 2) 只想清变更标记、保留用户副本
+hermes skills reset <name> --restore --rebaseline
+```
 
 ## 参考文件
 
