@@ -11,7 +11,7 @@ license: MIT
 metadata:
   hermes:
     tags: [skills, bundle, reset, restore, manifest, maintenance, batch]
-    related_skills: [daily-system-maintenance]
+    related_skills: [bundle-skill-restore-all]
 ---
 
 # 批量重置 bundled skills
@@ -131,7 +131,7 @@ hermes skills reset <name> --restore --rebaseline
 | `hermes skills sync --quiet` 想重建 manifest | 不存在 `sync` 子命令；`reset --restore` 已隐式重建 |
 | 批量循环里 `hermes: command not found` | 即使 `~/.bashrc` 有 `export PATH="$HOME/.local/bin:$PATH"`，**background subshell 也不会 source 它** —— 用绝对路径 `HERMES=/home/dr/.local/bin/hermes` 或显式 export |
 | **忽略 `scripts/reset_bundled_skills.py` 现成脚本，自己重写 shell 循环** | skill 目录里已有封装好的 Python 脚本。先看 `scripts/`，再看 `references/`，最后才手写循环。脚本路径：`~/.hermes/skills/local_share/hermes/reset-bundle-skills/scripts/reset_bundled_skills.py`（绝对路径以 `~/.hermes/skills/local_share/hermes/reset-bundle-skills/` 为准，bundle 路径会随版本变化） |
-| **误以为 `related_skills: daily-system-maintenance` 是已存在的 skill** | 截至 2026-06-29 `daily-system-maintenance` 还不存在，是个 planned umbrella。四步曲 cron 直接注入 prompt，不依赖该 skill |
+| **误以为 `related_skills: daily-system-maintenance` 是已存在的 skill** | 那是个 planned umbrella，从未落地。**四步曲 cron 直接注入 prompt，不依赖该 skill**。已把 `related_skills` 指向 `bundle-skill-restore-all`（本技能的反向指针） |
 | **耗时估算偏差**：实际 72 个 = 76s（不是 ~96s） | 用 `notify_on_complete=true` 后台跑，不要前台 60s 死等 |
 | **`tee` 写到 /tmp 报 `No space left on device`** | x1tablet 上 /tmp 是 8G tmpfs，cron 启动时可能 100% 满（用户不可见文件撑满）。**永远把循环日志写到 `/home/dr/.hermes/logs/reset-bundle-YYYYMMDD.log`**，不要写 /tmp |
 | **`cd hermes-agent` 后仍报 `ModuleNotFoundError: No module named 'tools'`** | 2026-07-02 实测：`cd` 不会自动把 cwd 加进 `sys.path`，`from tools.skills_sync import` 仍找不到模块。**必须显式 `PYTHONPATH=/home/dr/.hermes/hermes-agent`**，并且用 venv 里的 python：`/home/dr/.hermes/hermes-agent/venv/bin/python`。系统 `python3` 缺少 hermes 依赖也会失败 |

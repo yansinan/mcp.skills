@@ -1,9 +1,9 @@
 ---
 name: bundle-skill-restore-all
-description: >
-  Batch-restore all user-modified bundled skills to their original bundled
-  version. Calls sync_skills() to detect which bundled skills have been
-  modified, then runs reset_bundled_skill(name, restore=True) for each one.
+description: >-
+  Deprecated pointer to the canonical `reset-bundle-skills` skill, which
+  batch-restores user-modified bundled skills. Kept only so older references
+  to this skill name still resolve. Use `reset-bundle-skills` instead.
 source: hermes
 tags:
   - hermes
@@ -11,56 +11,28 @@ tags:
   - bundled-skills
   - restore
   - batch
+  - deprecated
 ---
 
-# bundle-skill-restore-all
+# bundle-skill-restore-all — 已并入 `reset-bundle-skills`
 
-## What it does
+**本技能已废弃，功能全部由 `reset-bundle-skills` 承担。**
 
-`hermes skills restore <name>` resets **one** bundled skill: clears the sync
-manifest entry and re-copies the bundled source. Doing this manually for N
-modified skills is tedious.
-
-This skill batch-restores **all** user-modified bundled skills at once.
-
-## The script
-
-`scripts/restore_all.py` — call it from the Hermes venv:
-
-```bash
-cd ~/.hermes/hermes-agent && source venv/bin/activate
-python3 ~/.hermes/skills/local/hermes_chores/bundle_skill_restore_all/scripts/restore_all.py
-```
-
-Flags:
-
-| Flag | Purpose |
+| 旧文档里的说法 | 实际情况 |
 |---|---|
-| `--check` | Only list user-modified skills, don't restore |
-| `--dry-run` / `-n` | Show what would be done without modifying |
-| `--help` / `-h` | Show help |
+| `hermes skills restore <name>` | ❌ 没有 `restore` 子命令。正确是 `hermes skills reset <name> --restore --yes` |
+| `scripts/restore_all.py` | ❌ 脚本不存在。正确的是 `reset-bundle-skills/scripts/reset_bundled_skills.py` |
+| `~/.hermes/skills/local/hermes_chores/...` 路径 | ❌ 目录不存在。脚本在 `~/.hermes/skills/local_share/hermes/reset-bundle-skills/scripts/` |
 
-Quick verification after restore:
+**唯一推荐路径**：
 
 ```bash
-cd ~/.hermes/hermes-agent && source venv/bin/activate
-~/.hermes/skills/local/hermes_chores/bundle_skill_restore_all/scripts/restore_all.py --check
-# Should print: ✓ All N bundled skills are in sync. Nothing to restore.
+PYTHONPATH=/home/dr/.hermes/hermes-agent \
+  /home/dr/.hermes/hermes-agent/venv/bin/python \
+  ~/.hermes/skills/local_share/hermes/reset-bundle-skills/scripts/reset_bundled_skills.py --restore
 ```
 
-## Key functions referenced
+查看哪些被改过：`hermes skills list-modified`
+仅列出目标不改动：`... reset_bundled_skills.py --dry-run`
 
-| Function | Location | Purpose |
-|---|---|---|
-| `sync_skills(quiet=True)` | `tools.skills_sync` | Detect user-modified skills + re-sync |
-| `reset_bundled_skill(name, restore=True)` | `tools.skills_sync` | Clear manifest + delete + re-copy from bundled |
-
-## Pitfalls
-
-- Only works with **bundled** skills (those synced from `skills/` dir in the
-  Hermes repo). Hub-installed skills are NOT affected.
-- `--restore` deletes your local edits — make sure you haven't customized a
-  bundled skill you want to keep. The `user_modified` list only catches skills
-  that differ from the origin hash, so customisations are respected until you
-  deliberately reset them.
-- Requires the Hermes venv to be active (`~/.hermes/hermes-agent/venv`).
+完整语义、坑位表和 `repair-official` 回退策略见 **`reset-bundle-skills`** 技能。

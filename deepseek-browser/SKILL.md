@@ -7,7 +7,7 @@ license: MIT
 metadata:
   hermes:
     tags: [search, deepseek, browser, cdp, smart-search]
-    related_skills: [browser-content-extraction]
+    related_skills: [cdp_browser]
 ---
 
 # DeepSeek Browser Smart Search

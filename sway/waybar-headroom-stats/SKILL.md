@@ -7,7 +7,7 @@ platforms: [linux]
 metadata:
   hermes:
     tags: [headroom, proxy, waybar, monitoring, serverhome]
-    related_skills: [waybar-config, deepseek-cost]
+    related_skills: [ncm-cli-setup]
 ---
 
 # Waybar Headroom 统计模块
